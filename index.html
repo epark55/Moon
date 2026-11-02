@@ -87,7 +87,7 @@ button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 <div class="loc" id="loc"></div>
 <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-t="cal">Calendar</button><button role="tab" aria-selected="false" data-t="pg">Phase Guide</button><button role="tab" aria-selected="false" data-t="fx">Moon Facts</button><button role="tab" aria-selected="false" data-t="ev">Sky Events</button></div>
 <div id="view"></div>
-<p class="note">Times are shown in your local time zone. Phase times for October to December 2026 match published almanacs; other months are calculated and are typically accurate to within an hour or so. Illumination and age are calculated for local noon on each day. Moonrise and moonset are calculated for the coordinates you enter, shown in your device’s time zone; your location stays in this browser. The horizon setting raises the horizon to match trees, hills or buildings in the direction the Moon rises, so moonrise comes a little later and moonset a little earlier. A supermoon here means a full moon closer than about 227,000 miles.</p>
+<p class="note">Times are shown in your local time zone. Phase times for October to December 2026 match published almanacs; other months are calculated and are typically accurate to within an hour or so. Illumination and age are calculated for local noon on each day, and for right now on today's date. Moonrise and moonset are calculated for the coordinates you enter, shown in your device’s time zone; your location stays in this browser. The horizon setting raises the horizon to match trees, hills or buildings in the direction the Moon rises, so moonrise comes a little later and moonset a little earlier. A supermoon here means a full moon closer than about 227,000 miles.</p>
 <section class="note" aria-labelledby="t-hs"><h2 id="t-hs" style="font-size:1rem;margin:0 0 4px;color:var(--fg)">Save to your home screen</h2><p style="margin:4px 0"><strong>iPhone:</strong> open this page in Safari, tap the Share button (square with an arrow), then <em>Add to Home Screen</em>.</p><p style="margin:4px 0"><strong>Android:</strong> open this page in Chrome, tap the &#8942; menu, then <em>Add to Home screen</em>.</p></section>
 <p class="note">Tip: if anything looks out of date or off, tap <b>Today</b> to reload the app with the latest times, weather and features.</p>
 <p class="note">Cloud cover forecasts for the next two weeks come from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>. Your coordinates are sent to them when you set a location, and also once to <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a> to look up the name of the nearest town. Nothing else is sent.</p>
@@ -223,6 +223,8 @@ function moon(p,s,jd){
 const fmt=(jd,o)=>toDate(jd+30/86400).toLocaleString([],o||{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 const key=d=>d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
 const noonJD=(y,m,d)=>toJD(new Date(y,m,d,12));
+/* Phase, age and distance for a day: right now for today's date, local noon for every other day, so the top of the page and the day card always agree. */
+const dayJD=(y,m,d)=>{const n=new Date();return y===n.getFullYear()&&m===n.getMonth()&&d===n.getDate()?toJD(n):noonJD(y,m,d)};
 const $=id=>document.getElementById(id);
 const now=new Date();
 let Y=now.getFullYear(),M=now.getMonth(),SEL=key(now),TAB='cal';
@@ -241,7 +243,7 @@ function cal(){
   h+=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="dow">${d}</div>`).join('');
   for(let i=0;i<lead;i++)h+='<div class="day out"></div>';
   for(let d=1;d<=days;d++){
-    const k=Y+'-'+(M+1)+'-'+d,i=info(noonJD(Y,M,d)),es=map[k]||[],sp=SPECIAL.some(s=>!s.minor&&inReg(s)&&s.keys.includes(k)),gh=LOC&&goldenNotes(Y,M,d).some(o=>o.strong);
+    const k=Y+'-'+(M+1)+'-'+d,i=info(dayJD(Y,M,d)),es=map[k]||[],sp=SPECIAL.some(s=>!s.minor&&inReg(s)&&s.keys.includes(k)),gh=LOC&&goldenNotes(Y,M,d).some(o=>o.strong);
     const bd=es.map(e=>`<span class="bd ${e.sup?'sup':''}">${e.sup?'Supermoon':e.q===0?'New':e.q===2?'Full':e.q===1?'1st Qtr':'Last Qtr'}</span>`).join('');
     h+=`<button class="day${k===todayK?' today':''}${k===SEL?' sel':''}" data-k="${k}" data-d="${d}"><span class="d">${d}</span>${sp?'<i title="Sky event"></i>':''}${gh?'<i class="gh" title="Moon near sunrise or sunset"></i>':''}${moon(i.p,30,noonJD(Y,M,d))}<span class="pc">${Math.round(i.ill*100)}%</span>${bd}</button>`;
   }
@@ -252,10 +254,10 @@ function cal(){
 function detail(){
   const [y,m,d]=SEL.split('-').map(Number);
   if(m-1!==M||y!==Y){$('detail').innerHTML='';return}
-  const i=info(noonJD(y,m-1,d)),es=events(noonJD(y,m-1,d)-.5,noonJD(y,m-1,d)+.5).filter(e=>key(toDate(e.jd))===SEL);
+  const i=info(dayJD(y,m-1,d)),es=events(noonJD(y,m-1,d)-.5,noonJD(y,m-1,d)+.5).filter(e=>key(toDate(e.jd))===SEL);
   const sp=SPECIAL.filter(s=>inReg(s)&&s.keys.includes(SEL));
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-  $('detail').innerHTML=`<div class="detail">${moon(i.p,72,noonJD(y,m-1,d))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(noonJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.`).join('')}</p>${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
+  $('detail').innerHTML=`<div class="detail">${moon(i.p,72,noonJD(y,m-1,d))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.`).join('')}</p>${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
 }
 let EVF='all',EVP=false;const CATS=[['all','All'],['ecl','Eclipses'],['occ','Occultations'],['met','Meteors'],['pla','Planets'],['pho','Photo'],['cyc','Distance and tides'],['moon','Moon and seasons']];
 const cat=s=>/eclipse/i.test(s.t)?'ecl':/occult/i.test(s.t)?'occ':/meteor|Taurid|Leonid|Geminid|Quadrantid|Perseid/i.test(s.t)?'met':/opposition|elongation|conjunction|close to/i.test(s.t)?'pla':/earthshine/i.test(s.t)?'pho':/perigee|apogee|king tide|micromoon/i.test(s.t)?'cyc':'moon';
@@ -386,10 +388,10 @@ async function nameLoc(lat,lon){
 }
 function saveLoc(lat,lon){LOC={lat,lon};try{localStorage.setItem('lunar-loc',JSON.stringify(LOC))}catch(e){}renderLoc();hero();if(TAB==='cal')detail();nameLoc(lat,lon)}
 async function shareDay(){
-  const [y,m,d]=SEL.split('-').map(Number),jd=noonJD(y,m-1,d),i=info(jd),sm=$('smsg'),say=t=>{if(sm)sm.textContent=t};
+  const [y,m,d]=SEL.split('-').map(Number),jd=noonJD(y,m-1,d),dj=dayJD(y,m-1,d),i=info(dj),sm=$('smsg'),say=t=>{if(sm)sm.textContent=t};
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const es=events(jd-.5,jd+.5).filter(e=>key(toDate(e.jd))===SEL),sp=SPECIAL.filter(q=>inReg(q)&&q.keys.includes(SEL)&&!q.minor);
-  const text=`${dt}: ${es.length?lab(es[0]):i.name}, ${Math.round(i.ill*100)}% illuminated, ${distTxt(jd)}. #moon #moonphase #lunarphotography`;
+  const text=`${dt}: ${es.length?lab(es[0]):i.name}, ${Math.round(i.ill*100)}% illuminated, ${distTxt(dj)}. #moon #moonphase #lunarphotography`;
   let file=null;
   try{
     const c=document.createElement('canvas');c.width=1080;c.height=1920;const x=c.getContext('2d');
@@ -404,7 +406,7 @@ async function shareDay(){
     x.textAlign='center';x.fillStyle=CR;x.font='600 84px Georgia, serif';x.fillText(fit(i.name,960),540,980);
     x.fillStyle=MU;x.font='40px Georgia, serif';x.fillText(new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'}),540,1044);
     const stat=(v,l,cx)=>{x.fillStyle=CR;x.font='600 58px Georgia, serif';x.fillText(v,cx,1146);x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText(l,cx,1190)};
-    stat(Math.round(i.ill*100)+'%','illuminated',200);stat(i.age.toFixed(1),'days old',540);stat((Math.round(moonPos(jd).km*0.621371/1000)*1000).toLocaleString(),'miles away',880);
+    stat(Math.round(i.ill*100)+'%','illuminated',200);stat(i.age.toFixed(1),'days old',540);stat((Math.round(moonPos(dj).km*0.621371/1000)*1000).toLocaleString(),'miles away',880);
     let yy=1262;
     if(LOC){
       const r=riseSet(y,m-1,d,LOC.lat,LOC.lon);
