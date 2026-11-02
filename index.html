@@ -412,7 +412,7 @@ async function shareDay(){
     if(lines.length){x.strokeStyle='#3a466e';x.beginPath();x.moveTo(90,yy+20);x.lineTo(990,yy+20);x.stroke();x.fillStyle=CR;x.font='600 38px Georgia, serif';
       lines.slice(0,3).forEach((t,k)=>x.fillText(fit(t,940),540,yy+78+k*56));
       if(lines.length>3){x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('+ '+(lines.length-3)+' more',540,yy+78+3*56)}}
-    x.setTransform(1,0,0,1,0,0);x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('Lunar moon calendar  ·  @ed_p_photos',540,1870);
+    x.setTransform(1,0,0,1,0,0);x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('Lunar Moon Calendar  ·  @ed_p_photos',540,1870);
     const blob=await new Promise(r=>c.toBlob(r,'image/png'));file=new File([blob],'moon-'+SEL+'.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text});say('Shared.');return}
   }catch(err){if(err&&err.name==='AbortError'){say('');return}}
