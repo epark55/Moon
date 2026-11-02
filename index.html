@@ -967,6 +967,6 @@ document.addEventListener('change',e=>{if(e.target.id==='yr'){EVY=+e.target.valu
 renderLoc();hero();show();
 </script>
 <button id="totop" class="tog" hidden aria-label="Back to top">&#8593; Top</button>
-<script>(function(){var b=document.getElementById("totop");function u(){var on=window.scrollY>500&&typeof TAB!=="undefined"&&TAB==="ev";b.hidden=!on}window.addEventListener("scroll",u,{passive:true});u()})()</script>
+<script>(function(){var b=document.getElementById("totop");function u(){var on=window.scrollY>500&&typeof TAB!=="undefined"&&(TAB==="ev"||TAB==="fx");b.hidden=!on}window.addEventListener("scroll",u,{passive:true});u()})()</script>
 </body>
 </html>
