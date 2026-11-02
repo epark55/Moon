@@ -231,6 +231,15 @@ const now=new Date();
 let Y=now.getFullYear(),M=now.getMonth(),SEL=key(now),TAB='cal';
 
 /* When the phase name changes during a local day (the names cover ranges around each phase), found by stepping through the day and narrowing down. */
+/* If a phase moment falls while the Moon is below the horizon, say when it next rises so the time is useful for viewing. */
+function belowNote(jd){
+  if(!LOC||altAt(jd,LOC.lat,LOC.lon)>0)return '';
+  const dt=toDate(jd);let nx=null;
+  for(let k=0;k<2&&nx===null;k++){const r=riseSet(dt.getFullYear(),dt.getMonth(),dt.getDate()+k,LOC.lat,LOC.lon).rise;if(r!==null&&r>jd)nx=r}
+  if(nx===null)return ' The Moon is below the horizon for your location at that time.';
+  const same=key(toDate(nx))===key(dt);
+  return ` The Moon is below the horizon for your location then. It next rises ${same?'later that day':'on '+fmt(nx,{weekday:'long'})} at ${fmt(nx,{hour:'numeric',minute:'2-digit'})}, ${dirTxt(azAt(nx,LOC.lat,LOC.lon))}, and will look nearly the same.`;
+}
 function phaseChanges(y,m,d){
   const t0=toJD(new Date(y,m,d)),t1=toJD(new Date(y,m,d+1)),out=[];let a=info(t0).name;
   for(let t=t0;t<t1-1e-9;t+=1/48){const b=info(t+1/48).name;if(b!==a){let lo=t,hi=t+1/48;for(let k=0;k<20;k++){const mid=(lo+hi)/2;info(mid).name===a?lo=mid:hi=mid}out.push({jd:(lo+hi)/2,from:a,to:b});a=b}}
@@ -265,7 +274,7 @@ function detail(){
   const i=info(dayJD(y,m-1,d)),es=events(noonJD(y,m-1,d)-.5,noonJD(y,m-1,d)+.5).filter(e=>key(toDate(e.jd))===SEL);
   const sp=SPECIAL.filter(s=>inReg(s)&&s.keys.includes(SEL));
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-  $('detail').innerHTML=`<div class="detail">${moon(i.p,72,noonJD(y,m-1,d))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.`).join('')}</p>${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
+  $('detail').innerHTML=`<div class="detail">${moon(i.p,72,noonJD(y,m-1,d))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
 }
 let EVF='all',EVP=false;const CATS=[['all','All'],['ecl','Eclipses'],['occ','Occultations'],['met','Meteors'],['pla','Planets'],['pho','Photo'],['cyc','Distance and tides'],['moon','Moon and seasons']];
 const cat=s=>/eclipse/i.test(s.t)?'ecl':/occult/i.test(s.t)?'occ':/meteor|Taurid|Leonid|Geminid|Quadrantid|Perseid/i.test(s.t)?'met':/opposition|elongation|conjunction|close to/i.test(s.t)?'pla':/earthshine/i.test(s.t)?'pho':/perigee|apogee|king tide|micromoon/i.test(s.t)?'cyc':'moon';
