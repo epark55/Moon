@@ -287,11 +287,15 @@ function loadWx(force){
 }
 const cloudAt=jd=>{if(!WX||jd===null)return null;const t=(jd-2440587.5)*86400,i=Math.round((t-WX.t[0])/3600);if(i<0||i>=WX.t.length||Math.abs(WX.t[i]-t)>5400)return null;const v=WX.c[i];return v==null?null:Math.round(v)};
 const cloudWord=p=>p<=15?'clear sky':p<=40?'mostly clear':p<=70?'partly cloudy':p<=90?'mostly cloudy':'overcast';
+function nextRS(y,m,d,kind){
+  for(let i=1;i<=3;i++){const j=riseSet(y,m,d+i,LOC.lat,LOC.lon)[kind];if(j!==null)return j}
+  return null;
+}
 function rsHtml(y,m,d){
   if(!LOC)return '';
-  const r=riseSet(y,m,d,LOC.lat,LOC.lon),f=j=>j===null?'none':fmt(j,{hour:'numeric',minute:'2-digit'}),dr=j=>{if(j===null)return '';const c=cloudAt(j);return '<span>'+dirTxt(azAt(j,LOC.lat,LOC.lon))+'</span>'+(c===null?'':'<span class="wx">'+c+'% clouds, '+cloudWord(c)+'</span>')};
+  const r=riseSet(y,m,d,LOC.lat,LOC.lon),f=j=>j===null?'none':fmt(j,{hour:'numeric',minute:'2-digit'}),dr=(j,kind)=>{if(j===null){const n=nextRS(y,m,d,kind);return '<span>'+(n===null?'':'no '+(kind==='rise'?'moonrise':'moonset')+' this day, next is '+fmt(n,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+'</span>'}const c=cloudAt(j);return '<span>'+dirTxt(azAt(j,LOC.lat,LOC.lon))+'</span>'+(c===null?'':'<span class="wx">'+c+'% clouds, '+cloudWord(c)+'</span>')};
   const gn=goldenNotes(y,m,d).map(o=>`<p class="gh-note"><b>Golden hour.</b> ${o.t}</p>`).join('');
-  return `<div class="rs"><div><b class="num">${f(r.rise)}</b><span>moonrise</span>${dr(r.rise)}</div><div><b class="num">${f(r.set)}</b><span>moonset</span>${dr(r.set)}</div></div>${gn}`;
+  return `<div class="rs"><div><b class="num">${f(r.rise)}</b><span>moonrise</span>${dr(r.rise,'rise')}</div><div><b class="num">${f(r.set)}</b><span>moonset</span>${dr(r.set,'set')}</div></div>${gn}`;
 }
 function renderLoc(){
   loadWx();
