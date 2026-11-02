@@ -70,6 +70,7 @@ button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .loc{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 0;color:var(--muted);font-size:.88rem}
 .loc .warn,.loc #lmsg{flex-basis:100%;color:var(--gold)}
 .loc input{font:inherit;font-size:16px;width:150px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg)}
+.pch{margin:8px 0 0;font-size:.9rem;color:var(--muted)}.pch b{color:var(--fg)}
 .rs{display:flex;gap:22px;margin-top:10px;flex-wrap:wrap}.rs>div{display:flex;align-items:center;gap:10px}.cmp{flex:none}.rs b{display:block}.rs span{display:block;color:var(--muted);font-size:.8rem}
 .share{margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.share span{color:var(--muted);font-size:.85rem}
 .loc .cf{display:inline-flex;gap:4px}.loc .cf input{width:130px}.loc .cf select{font:inherit;font-size:16px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg)}.loc .hz-wrap{display:flex;align-items:center;gap:8px}.loc #hz{width:auto;max-width:100%;font:inherit;font-size:16px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg)}
@@ -229,9 +230,16 @@ const $=id=>document.getElementById(id);
 const now=new Date();
 let Y=now.getFullYear(),M=now.getMonth(),SEL=key(now),TAB='cal';
 
+/* When the phase name changes during a local day (the names cover ranges around each phase), found by stepping through the day and narrowing down. */
+function phaseChanges(y,m,d){
+  const t0=toJD(new Date(y,m,d)),t1=toJD(new Date(y,m,d+1)),out=[];let a=info(t0).name;
+  for(let t=t0;t<t1-1e-9;t+=1/48){const b=info(t+1/48).name;if(b!==a){let lo=t,hi=t+1/48;for(let k=0;k<20;k++){const mid=(lo+hi)/2;info(mid).name===a?lo=mid:hi=mid}out.push({jd:(lo+hi)/2,from:a,to:b});a=b}}
+  return out;
+}
+const pcHtml=(y,m,d)=>phaseChanges(y,m,d).map(c=>`<p class="pch">Changes from ${c.from} to <b>${c.to}</b> at ${fmt(c.jd,{hour:'numeric',minute:'2-digit'})}.</p>`).join('');
 function hero(){
   const jd=toJD(new Date()),i=info(jd),nx=events(jd,jd+45).slice(0,4);
-  $('hero').innerHTML=moon(i.p,150,noonJD(now.getFullYear(),now.getMonth(),now.getDate()))+`<div><h2>${i.name}</h2><p>${now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p><div class="facts"><div><b class="num">${Math.round(i.ill*100)}%</b><span>illuminated</span></div><div><b class="num">${i.age.toFixed(1)}</b><span>days old</span></div><div><b class="num">${(Math.round(moonPos(jd).km*0.621371/1000)*1000).toLocaleString()}</b><span>miles away</span></div></div>${rsHtml(now.getFullYear(),now.getMonth(),now.getDate())}</div>`;
+  $('hero').innerHTML=moon(i.p,150,noonJD(now.getFullYear(),now.getMonth(),now.getDate()))+`<div><h2>${i.name}</h2><p>${now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p><div class="facts"><div><b class="num">${Math.round(i.ill*100)}%</b><span>illuminated</span></div><div><b class="num">${i.age.toFixed(1)}</b><span>days old</span></div><div><b class="num">${(Math.round(moonPos(jd).km*0.621371/1000)*1000).toLocaleString()}</b><span>miles away</span></div></div>${pcHtml(now.getFullYear(),now.getMonth(),now.getDate())}${rsHtml(now.getFullYear(),now.getMonth(),now.getDate())}</div>`;
   $('next').innerHTML=nx.map(e=>`<div class="${e.sup?'sup':''}"><b>${lab(e)}</b><span>${fmt(e.jd)}</span></div>`).join('');
 }
 function cal(){
@@ -257,7 +265,7 @@ function detail(){
   const i=info(dayJD(y,m-1,d)),es=events(noonJD(y,m-1,d)-.5,noonJD(y,m-1,d)+.5).filter(e=>key(toDate(e.jd))===SEL);
   const sp=SPECIAL.filter(s=>inReg(s)&&s.keys.includes(SEL));
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-  $('detail').innerHTML=`<div class="detail">${moon(i.p,72,noonJD(y,m-1,d))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.`).join('')}</p>${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
+  $('detail').innerHTML=`<div class="detail">${moon(i.p,72,noonJD(y,m-1,d))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.`).join('')}</p>${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
 }
 let EVF='all',EVP=false;const CATS=[['all','All'],['ecl','Eclipses'],['occ','Occultations'],['met','Meteors'],['pla','Planets'],['pho','Photo'],['cyc','Distance and tides'],['moon','Moon and seasons']];
 const cat=s=>/eclipse/i.test(s.t)?'ecl':/occult/i.test(s.t)?'occ':/meteor|Taurid|Leonid|Geminid|Quadrantid|Perseid/i.test(s.t)?'met':/opposition|elongation|conjunction|close to/i.test(s.t)?'pla':/earthshine/i.test(s.t)?'pho':/perigee|apogee|king tide|micromoon/i.test(s.t)?'cyc':'moon';
