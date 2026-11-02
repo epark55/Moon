@@ -148,6 +148,16 @@ function sunAlt(jd,lat,lon){
   const n=jd-2451545,L=280.46+0.9856474*n,g=(357.528+0.9856003*n)*RAD,l=(L+1.915*Math.sin(g)+0.02*Math.sin(2*g))*RAD,e=(23.439-4e-7*n)*RAD,ra=Math.atan2(Math.cos(e)*Math.sin(l),Math.cos(l)),de=Math.asin(Math.sin(e)*Math.sin(l)),H=(280.46061837+360.98564736629*n+lon)*RAD-ra,la=lat*RAD;
   return Math.asin(Math.sin(la)*Math.sin(de)+Math.cos(la)*Math.cos(de)*Math.cos(H))/RAD+0.833;
 }
+function sunEq(jd){const n=jd-2451545,L=280.46+0.9856474*n,g=(357.528+0.9856003*n)*RAD,l=(L+1.915*Math.sin(g)+0.02*Math.sin(2*g))*RAD,e=(23.439-4e-7*n)*RAD;return{ra:Math.atan2(Math.cos(e)*Math.sin(l),Math.cos(l))/RAD,dec:Math.asin(Math.sin(e)*Math.sin(l))/RAD}}
+/* How the Moon looks on a given night: the best viewing moment (highest in a dark sky), the tilt of the disc (parallactic angle q) and the direction of the lit side (chi), both in degrees counterclockwise from straight up. */
+function moonLook(jd0,lat,lon){
+  let best=null,bs=-1e9;
+  for(let t=jd0;t<=jd0+1;t+=1/144){const a=altAt(t,lat,lon),sa=sunAlt(t,lat,lon),sc=(a>0?1000:0)+(sa<-6?500:sa<0?250:0)+a;if(sc>bs){bs=sc;best=t}}
+  const p=moonPos(best),su=sunEq(best),H=(280.46061837+360.98564736629*(best-2451545)+lon-p.ra)*RAD,la=lat*RAD,de=p.dec*RAD,ds=su.dec*RAD,da=(su.ra-p.ra)*RAD;
+  const q=Math.atan2(Math.sin(H),Math.tan(la)*Math.cos(de)-Math.sin(de)*Math.cos(H))/RAD;
+  const chi=Math.atan2(Math.cos(ds)*Math.sin(da),Math.sin(ds)*Math.cos(de)-Math.cos(ds)*Math.sin(de)*Math.cos(da))/RAD;
+  return{t:best,q,chi,alt:altAt(best,lat,lon)};
+}
 function sunRS(y,m,d,lat,lon){
   const t0=toJD(new Date(y,m,d)),t1=toJD(new Date(y,m,d+1)),st=1/96;let rise=null,set=null,a=sunAlt(t0,lat,lon);
   for(let t=t0;t<t1-1e-9;t+=st){const b=sunAlt(t+st,lat,lon);
@@ -317,10 +327,11 @@ async function shareDay(){
     const c=document.createElement('canvas');c.width=1080;c.height=1920;const x=c.getContext('2d');
     const g=x.createLinearGradient(0,0,0,1920);g.addColorStop(0,'#0d1326');g.addColorStop(1,'#1d2748');x.fillStyle=g;x.fillRect(0,0,1080,1920);
     const MI=new Image();MI.src=document.querySelector('#mimg image').getAttribute('href');try{await MI.decode()}catch(e){}
-    x.save();if(document.body.classList.contains('south')){x.translate(540,560);x.rotate(Math.PI);x.translate(-540,-560)}
-    x.translate(120,120);x.scale(1.3125,1.3125);x.fillStyle='#2a3453';x.beginPath();x.arc(320,320,319,0,7);x.fill();
-    x.save();x.beginPath();x.arc(320,320,319,0,7);x.clip();x.globalAlpha=.2;x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();
-    x.save();x.clip(new Path2D(moon(i.p,640).match(/<path d="([^"]+)"/)[1]));x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();x.restore();x.translate(0,90);
+    const south=document.body.classList.contains('south'),la=LOC?LOC.lat:(south?-35:35),lo=LOC?LOC.lon:-new Date().getTimezoneOffset()/4,lk=moonLook(jd-.5,la,lo),
+      q=lk.q*Math.PI/180,mr=-((lk.chi-lk.q)-(i.p<.5?270:90))*Math.PI/180,mpath=new Path2D(moon(i.p,640).match(/<path d="([^"]+)"/)[1]);
+    x.save();x.translate(120,120);x.scale(1.3125,1.3125);x.fillStyle='#2a3453';x.beginPath();x.arc(320,320,319,0,7);x.fill();
+    x.save();x.beginPath();x.arc(320,320,319,0,7);x.clip();x.translate(320,320);x.rotate(q);x.translate(-320,-320);x.globalAlpha=.2;x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();
+    x.save();x.translate(320,320);x.rotate(mr);x.translate(-320,-320);x.clip(mpath);x.translate(320,320);x.rotate(q-mr);x.translate(-320,-320);x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();x.restore();x.translate(0,90);
     const fit=(t,w)=>{while(t.length>3&&x.measureText(t).width>w)t=t.slice(0,-2).trimEnd();return t},CR='#f1ead0',MU='#aab4d0';
     x.textAlign='center';x.fillStyle=CR;x.font='600 84px Georgia, serif';x.fillText(fit(i.name,960),540,980);
     x.fillStyle=MU;x.font='40px Georgia, serif';x.fillText(new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'}),540,1044);
