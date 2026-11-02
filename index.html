@@ -56,7 +56,6 @@ button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .day .bd{font-size:.68rem;font-weight:600;color:var(--acc);text-align:center;line-height:1.1}
 .day .bd.sup{color:var(--gold)}
 .day i{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--gold)}.day i.gh{right:auto;left:6px;background:var(--acc)}.by{margin-top:-8px}.by a{color:var(--acc);font-weight:600}.today-mark{margin:4px 0 10px;padding:4px 12px;border-radius:999px;background:var(--acc);color:var(--bg);font-size:.8rem;font-weight:700;display:inline-block}.rs .wx{color:var(--acc);font-weight:600}.gh-note{margin:10px 0 0;font-size:.92rem}
-.south .mn{transform:rotate(180deg)}
 .detail{margin-top:16px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;gap:16px;align-items:center}
 .detail h3{margin:0;font-size:1.2rem}.detail p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
 .list{display:grid;gap:12px}
@@ -208,10 +207,18 @@ const PG=[
  [.875,'Waning Crescent','A thin crescent in the eastern sky before dawn.','Watch for planet conjunctions and earthshine in the early morning.']
 ];
 let MC=0;
-function moon(p,s){
-  const r=s/2-1,c=s/2,rx=Math.abs(Math.cos(2*Math.PI*p))*r,n=++MC,o=c-r,w=2*r;
+const LKC={};
+/* Tilt of the Moon as seen from the saved location (or a mid-northern default): photo turned by q, lit side turned by mr, both in degrees. */
+function lookAng(jd,p){
+  const la=LOC?LOC.lat:35,lo=LOC?LOC.lon:-new Date().getTimezoneOffset()/4,kk=jd.toFixed(1)+'|'+la+'|'+lo;
+  if(!LKC[kk]){const l=moonLook(jd-.5,la,lo);LKC[kk]={q:l.q,chi:l.chi}}
+  const l=LKC[kk];return{q:l.q,mr:-((l.chi-l.q)-(p<.5?270:90))}
+}
+function moon(p,s,jd){
+  const r=s/2-1,c=s/2,rx=Math.abs(Math.cos(2*Math.PI*p))*r,n=++MC,o=c-r,w=2*r,A=jd===undefined?null:lookAng(jd,p);
   const d=p<.5?`M${c} ${c-r}A${r} ${r} 0 0 1 ${c} ${c+r}A${rx} ${r} 0 0 ${p<.25?0:1} ${c} ${c-r}Z`:`M${c} ${c-r}A${r} ${r} 0 0 0 ${c} ${c+r}A${rx} ${r} 0 0 ${p>.75?1:0} ${c} ${c-r}Z`;
-  return `<svg class="mn" viewBox="0 0 ${s} ${s}" width="${s}" height="${s}" aria-hidden="true"><defs><filter id="mf${n}" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="${(s*0.012).toFixed(2)}"/></filter><mask id="mm${n}"><path d="${d}" fill="#fff" filter="url(#mf${n})"/></mask></defs><circle cx="${c}" cy="${c}" r="${r}" fill="var(--dark)" stroke="var(--line)"/><use href="#mimg" x="${o}" y="${o}" width="${w}" height="${w}" opacity=".2"/><use href="#mimg" x="${o}" y="${o}" width="${w}" height="${w}" mask="url(#mm${n})"/></svg>`;
+  const tq=A?` transform="rotate(${A.q.toFixed(1)} ${c} ${c})"`:'',tm=A?` transform="rotate(${A.mr.toFixed(1)} ${c} ${c})"`:'';
+  return `<svg class="mn" viewBox="0 0 ${s} ${s}" width="${s}" height="${s}" aria-hidden="true"><defs><filter id="mf${n}" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="${(s*0.012).toFixed(2)}"/></filter><mask id="mm${n}"><path d="${d}"${tm} fill="#fff" filter="url(#mf${n})"/></mask></defs><circle cx="${c}" cy="${c}" r="${r}" fill="var(--dark)" stroke="var(--line)"/><use href="#mimg" x="${o}" y="${o}" width="${w}" height="${w}" opacity=".2"${tq}/><g mask="url(#mm${n})"><use href="#mimg" x="${o}" y="${o}" width="${w}" height="${w}"${tq}/></g></svg>`;
 }
 const fmt=(jd,o)=>toDate(jd+30/86400).toLocaleString([],o||{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 const key=d=>d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
@@ -222,7 +229,7 @@ let Y=now.getFullYear(),M=now.getMonth(),SEL=key(now),TAB='cal';
 
 function hero(){
   const jd=toJD(new Date()),i=info(jd),nx=events(jd,jd+45).slice(0,4);
-  $('hero').innerHTML=moon(i.p,150)+`<div><h2>${i.name}</h2><p>${now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p><div class="facts"><div><b class="num">${Math.round(i.ill*100)}%</b><span>illuminated</span></div><div><b class="num">${i.age.toFixed(1)}</b><span>days old</span></div><div><b class="num">${(Math.round(moonPos(jd).km*0.621371/1000)*1000).toLocaleString()}</b><span>miles away</span></div></div>${rsHtml(now.getFullYear(),now.getMonth(),now.getDate())}</div>`;
+  $('hero').innerHTML=moon(i.p,150,noonJD(now.getFullYear(),now.getMonth(),now.getDate()))+`<div><h2>${i.name}</h2><p>${now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p><div class="facts"><div><b class="num">${Math.round(i.ill*100)}%</b><span>illuminated</span></div><div><b class="num">${i.age.toFixed(1)}</b><span>days old</span></div><div><b class="num">${(Math.round(moonPos(jd).km*0.621371/1000)*1000).toLocaleString()}</b><span>miles away</span></div></div>${rsHtml(now.getFullYear(),now.getMonth(),now.getDate())}</div>`;
   $('next').innerHTML=nx.map(e=>`<div class="${e.sup?'sup':''}"><b>${lab(e)}</b><span>${fmt(e.jd)}</span></div>`).join('');
 }
 function cal(){
@@ -236,7 +243,7 @@ function cal(){
   for(let d=1;d<=days;d++){
     const k=Y+'-'+(M+1)+'-'+d,i=info(noonJD(Y,M,d)),es=map[k]||[],sp=SPECIAL.some(s=>!s.minor&&inReg(s)&&s.keys.includes(k)),gh=LOC&&goldenNotes(Y,M,d).some(o=>o.strong);
     const bd=es.map(e=>`<span class="bd ${e.sup?'sup':''}">${e.sup?'Supermoon':e.q===0?'New':e.q===2?'Full':e.q===1?'1st Qtr':'Last Qtr'}</span>`).join('');
-    h+=`<button class="day${k===todayK?' today':''}${k===SEL?' sel':''}" data-k="${k}" data-d="${d}"><span class="d">${d}</span>${sp?'<i title="Sky event"></i>':''}${gh?'<i class="gh" title="Moon near sunrise or sunset"></i>':''}${moon(i.p,30)}<span class="pc">${Math.round(i.ill*100)}%</span>${bd}</button>`;
+    h+=`<button class="day${k===todayK?' today':''}${k===SEL?' sel':''}" data-k="${k}" data-d="${d}"><span class="d">${d}</span>${sp?'<i title="Sky event"></i>':''}${gh?'<i class="gh" title="Moon near sunrise or sunset"></i>':''}${moon(i.p,30,noonJD(Y,M,d))}<span class="pc">${Math.round(i.ill*100)}%</span>${bd}</button>`;
   }
   h+='</div><div id="detail"></div>';
   $('view').innerHTML=h;
@@ -248,7 +255,7 @@ function detail(){
   const i=info(noonJD(y,m-1,d)),es=events(noonJD(y,m-1,d)-.5,noonJD(y,m-1,d)+.5).filter(e=>key(toDate(e.jd))===SEL);
   const sp=SPECIAL.filter(s=>inReg(s)&&s.keys.includes(SEL));
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-  $('detail').innerHTML=`<div class="detail">${moon(i.p,72)}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(noonJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.`).join('')}</p>${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
+  $('detail').innerHTML=`<div class="detail">${moon(i.p,72,noonJD(y,m-1,d))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(noonJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.`).join('')}</p>${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
 }
 let EVF='all',EVP=false;const CATS=[['all','All'],['ecl','Eclipses'],['occ','Occultations'],['met','Meteors'],['pla','Planets'],['pho','Photo'],['cyc','Distance and tides'],['moon','Moon and seasons']];
 const cat=s=>/eclipse/i.test(s.t)?'ecl':/occult/i.test(s.t)?'occ':/meteor|Taurid|Leonid|Geminid|Quadrantid|Perseid/i.test(s.t)?'met':/opposition|elongation|conjunction|close to/i.test(s.t)?'pla':/earthshine/i.test(s.t)?'pho':/perigee|apogee|king tide|micromoon/i.test(s.t)?'cyc':'moon';
