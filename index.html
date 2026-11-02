@@ -251,7 +251,7 @@ function pgTab(){
 function show(){TAB==='cal'?cal():TAB==='ev'?evTab():pgTab()}
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-t]');if(t){TAB=t.dataset.t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b===t));if(TAB==='ev'){EVY=Math.max(2026,Math.min(2050,now.getFullYear()));EVF='all';evTab(true)}else show();return}
-  const m=e.target.closest('[data-m]');if(m){const v=+m.dataset.m;if(v===0){Y=now.getFullYear();M=now.getMonth();SEL=key(now)}else{M+=v;if(M<0){M=11;Y--}if(M>11){M=0;Y++}}cal();return}
+  const m=e.target.closest('[data-m]');if(m){const v=+m.dataset.m;if(v===0){Y=now.getFullYear();M=now.getMonth();SEL=key(now);loadWx(true)}else{M+=v;if(M<0){M=11;Y--}if(M>11){M=0;Y++}}cal();return}
   const d=e.target.closest('.day[data-k]');if(d){SEL=d.dataset.k;document.querySelectorAll('.day.sel').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');detail()}
 });
 $('hemi').addEventListener('click',()=>{
@@ -279,10 +279,10 @@ const pc=s=>{const m=/^\s*(-?\d+(?:\.\d+)?)\s*°?\s*([NSEWnsew])?\s*$/.exec(s);i
 const tzOff=lon=>Math.abs(lon/15+new Date().getTimezoneOffset()/60);
 const locWarn=()=>LOC&&tzOff(LOC.lon)>4&&tzOff(-LOC.lon)<=4?`<span class="warn">This longitude is ${LOC.lon>0?'east':'west'} of Greenwich, but your device clock matches a ${LOC.lon>0?'western':'eastern'} location. If that is wrong, tap Change and enter it as ${Math.abs(LOC.lon)} ${LOC.lon>0?'W':'E'}.</span>`:'';
 let WX=null,WXK='';
-function loadWx(){
+function loadWx(force){
   if(!LOC)return;
-  const k=LOC.lat.toFixed(2)+','+LOC.lon.toFixed(2);
-  if(WXK===k)return;WXK=k;WX=null;
+  const k=LOC.lat.toFixed(2)+','+LOC.lon.toFixed(2),same=WXK===k;
+  if(same&&!force)return;WXK=k;if(!same)WX=null;
   try{fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LOC.lat.toFixed(3)}&longitude=${LOC.lon.toFixed(3)}&hourly=cloud_cover&past_days=1&forecast_days=16&timeformat=unixtime&timezone=GMT`).then(r=>r.ok?r.json():Promise.reject()).then(j=>{if(WXK!==k||!j.hourly)return;WX={t:j.hourly.time,c:j.hourly.cloud_cover};hero();if(TAB==='cal')detail()}).catch(()=>{WXK=''})}catch(e){WXK=''}
 }
 const cloudAt=jd=>{if(!WX||jd===null)return null;const t=(jd-2440587.5)*86400,i=Math.round((t-WX.t[0])/3600);if(i<0||i>=WX.t.length||Math.abs(WX.t[i]-t)>5400)return null;const v=WX.c[i];return v==null?null:Math.round(v)};
