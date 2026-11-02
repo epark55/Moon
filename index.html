@@ -251,7 +251,7 @@ function pgTab(){
 function show(){TAB==='cal'?cal():TAB==='ev'?evTab():pgTab()}
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-t]');if(t){TAB=t.dataset.t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b===t));if(TAB==='ev'){EVY=Math.max(2026,Math.min(2050,now.getFullYear()));EVF='all';evTab(true)}else show();return}
-  const m=e.target.closest('[data-m]');if(m){const v=+m.dataset.m;if(v===0){Y=now.getFullYear();M=now.getMonth();SEL=key(now);loadWx(true)}else{M+=v;if(M<0){M=11;Y--}if(M>11){M=0;Y++}}cal();return}
+  const m=e.target.closest('[data-m]');if(m){const v=+m.dataset.m;if(v===0){if(navigator.onLine!==false){try{location.reload();return}catch(x){}}Y=now.getFullYear();M=now.getMonth();SEL=key(now);loadWx(true)}else{M+=v;if(M<0){M=11;Y--}if(M>11){M=0;Y++}}cal();return}
   const d=e.target.closest('.day[data-k]');if(d){SEL=d.dataset.k;document.querySelectorAll('.day.sel').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');detail()}
 });
 $('hemi').addEventListener('click',()=>{
@@ -305,19 +305,36 @@ function saveLoc(lat,lon){LOC={lat,lon};try{localStorage.setItem('lunar-loc',JSO
 async function shareDay(){
   const [y,m,d]=SEL.split('-').map(Number),jd=noonJD(y,m-1,d),i=info(jd),sm=$('smsg'),say=t=>{if(sm)sm.textContent=t};
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  const es=events(jd-.5,jd+.5).filter(e=>key(toDate(e.jd))===SEL);
+  const es=events(jd-.5,jd+.5).filter(e=>key(toDate(e.jd))===SEL),sp=SPECIAL.filter(q=>inReg(q)&&q.keys.includes(SEL)&&!q.minor);
   const text=`${dt}: ${es.length?lab(es[0]):i.name}, ${Math.round(i.ill*100)}% illuminated, ${distTxt(jd)}. #moon #moonphase #lunarphotography`;
   try{
     const c=document.createElement('canvas');c.width=1080;c.height=1920;const x=c.getContext('2d');
     const g=x.createLinearGradient(0,0,0,1920);g.addColorStop(0,'#0d1326');g.addColorStop(1,'#1d2748');x.fillStyle=g;x.fillRect(0,0,1080,1920);
-    x.save();if(document.body.classList.contains('south')){x.translate(540,730);x.rotate(Math.PI);x.translate(-540,-730)}
     const MI=new Image();MI.src=document.querySelector('#mimg image').getAttribute('href');try{await MI.decode()}catch(e){}
-    x.translate(140,330);x.fillStyle='#2a3453';x.beginPath();x.arc(400,400,399,0,7);x.fill();
-    x.save();x.beginPath();x.arc(400,400,399,0,7);x.clip();x.globalAlpha=.2;x.drawImage(MI,0,0,560,560,1,1,798,798);x.restore();
-    x.save();x.clip(new Path2D(moon(i.p,800).match(/<path d="([^"]+)"/)[1]));x.drawImage(MI,0,0,560,560,1,1,798,798);x.restore();x.restore();
-    x.fillStyle='#f1ead0';x.textAlign='center';x.font='600 92px Georgia, serif';x.fillText(i.name,540,1360);
-    x.fillStyle='#aab4d0';x.font='44px Georgia, serif';x.fillText(dt,540,1440);x.fillText(Math.round(i.ill*100)+'% illuminated',540,1510);
-    if(es.length)x.fillText(lab(es[0]),540,1580);
+    x.save();if(document.body.classList.contains('south')){x.translate(540,520);x.rotate(Math.PI);x.translate(-540,-520)}
+    x.translate(220,200);x.fillStyle='#2a3453';x.beginPath();x.arc(320,320,319,0,7);x.fill();
+    x.save();x.beginPath();x.arc(320,320,319,0,7);x.clip();x.globalAlpha=.2;x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();
+    x.save();x.clip(new Path2D(moon(i.p,640).match(/<path d="([^"]+)"/)[1]));x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();x.restore();
+    const fit=(t,w)=>{while(t.length>3&&x.measureText(t).width>w)t=t.slice(0,-2).trimEnd();return t},CR='#f1ead0',MU='#aab4d0';
+    x.textAlign='center';x.fillStyle=CR;x.font='600 84px Georgia, serif';x.fillText(fit(i.name,960),540,980);
+    x.fillStyle=MU;x.font='40px Georgia, serif';x.fillText(new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'}),540,1044);
+    const stat=(v,l,cx)=>{x.fillStyle=CR;x.font='600 58px Georgia, serif';x.fillText(v,cx,1146);x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText(l,cx,1190)};
+    stat(Math.round(i.ill*100)+'%','illuminated',200);stat(i.age.toFixed(1),'days old',540);stat((Math.round(moonPos(jd).km*0.621371/1000)*1000).toLocaleString(),'miles away',880);
+    let yy=1262;
+    if(LOC){
+      const r=riseSet(y,m-1,d,LOC.lat,LOC.lon);
+      x.strokeStyle='#3a466e';x.lineWidth=2;x.beginPath();x.moveTo(90,yy);x.lineTo(990,yy);x.stroke();
+      const col=(j,l,cx)=>{x.fillStyle=CR;x.font='600 58px Georgia, serif';x.fillText(j===null?'none':fmt(j,{hour:'numeric',minute:'2-digit'}),cx,yy+86);x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText(l,cx,yy+130);
+        if(j!==null){x.fillText(dirTxt(azAt(j,LOC.lat,LOC.lon)),cx,yy+172);const cl=cloudAt(j);if(cl!==null){x.fillStyle='#8fb4ea';x.fillText(cl+'% clouds, '+cloudWord(cl),cx,yy+214)}}};
+      col(r.rise,'moonrise',320);col(r.set,'moonset',760);yy+=250;
+    }
+    const lines=[];es.forEach(e=>lines.push(lab(e)+' at '+fmt(e.jd,{hour:'numeric',minute:'2-digit'})));
+    const nw=t=>t.toLowerCase().replace(/[^a-z ]/g,' ').split(/\s+/).filter(Boolean);sp.forEach(s2=>{const w=nw(s2.t),all=nw(lines.join(' '));if(!w.every(q=>all.includes(q)))lines.push(s2.t)});
+    if(LOC){const gh=goldenNotes(y,m-1,d).find(o=>o.strong);if(gh)lines.push('Golden hour moonrise or moonset')}
+    if(lines.length){x.strokeStyle='#3a466e';x.beginPath();x.moveTo(90,yy+20);x.lineTo(990,yy+20);x.stroke();x.fillStyle=CR;x.font='600 38px Georgia, serif';
+      lines.slice(0,3).forEach((t,k)=>x.fillText(fit(t,940),540,yy+78+k*56));
+      if(lines.length>3){x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('+ '+(lines.length-3)+' more',540,yy+78+3*56)}}
+    x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('Lunar moon calendar  ·  @ed_p_photos',540,1850);
     const blob=await new Promise(r=>c.toBlob(r,'image/png')),file=new File([blob],'moon.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text});say('Shared.');return}
   }catch(err){if(err&&err.name==='AbortError'){say('');return}}
