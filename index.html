@@ -25,7 +25,7 @@ h1,h2,h3,.num{font-family:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia
 .top h1{margin:0;font-size:1.5rem}
 .tog{font:inherit;font-size:.85rem;color:var(--muted);background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
 .tog:hover{color:var(--fg)}
-.hemi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gn .mn{transform:none}.gs .mn{transform:rotate(180deg)}.hemi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #totop{position:fixed;right:14px;bottom:18px;background:var(--bg,#0d1326);box-shadow:0 2px 10px rgba(0,0,0,.45);z-index:20}#totop[hidden]{display:none}.pastbtn{margin-bottom:12px}
 button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .hero{display:flex;gap:24px;align-items:center;flex-wrap:wrap;padding:8px 0 22px;border-bottom:1px solid var(--line)}
@@ -89,7 +89,6 @@ button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-t="cal">Calendar</button><button role="tab" aria-selected="false" data-t="pg">Phase Guide</button><button role="tab" aria-selected="false" data-t="fx">Moon Facts</button><button role="tab" aria-selected="false" data-t="ev">Sky Events</button></div>
 <div id="view"></div>
 <p class="note">Times are shown in your local time zone. Phase times for October to December 2026 match published almanacs; other months are calculated and are typically accurate to within an hour or so. Illumination and age are calculated for local noon on each day. Moonrise and moonset are calculated for the coordinates you enter, shown in your device’s time zone; your location stays in this browser. The horizon setting raises the horizon to match trees, hills or buildings in the direction the Moon rises, so moonrise comes a little later and moonset a little earlier. A supermoon here means a full moon closer than about 227,000 miles.</p>
-<div class="note hemi-row"><span>Moon orientation: </span><button class="tog" id="hemi" aria-pressed="false">Northern Hemisphere view</button></div>
 <section class="note" aria-labelledby="t-hs"><h2 id="t-hs" style="font-size:1rem;margin:0 0 4px;color:var(--fg)">Save to your home screen</h2><p style="margin:4px 0"><strong>iPhone:</strong> open this page in Safari, tap the Share button (square with an arrow), then <em>Add to Home Screen</em>.</p><p style="margin:4px 0"><strong>Android:</strong> open this page in Chrome, tap the &#8942; menu, then <em>Add to Home screen</em>.</p></section>
 <p class="note">Tip: if anything looks out of date or off, tap <b>Today</b> to reload the app with the latest times, weather and features.</p>
 <p class="note">Cloud cover forecasts for the next two weeks come from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>. Your coordinates are sent to them when you set a location, and nothing else is.</p>
@@ -275,7 +274,8 @@ function orbitHtml(){
 ${g}</svg>
 <p>This is a view looking down from above Earth's north pole. It is not to scale, because the Moon is really about 30 Earth-widths away. The Sun always lights the half of the Moon that faces it. The phases change because, as the Moon circles Earth counterclockwise, we see more or less of that lit half. At New Moon the lit half faces away from us, and at Full Moon it faces us. The gold ring is where the Moon is today (${cur.name.toLowerCase()}).</p></div>`}
 function pgTab(){
-  $('view').innerHTML='<div class="pg">'+PG.map(p=>`<div class="item">${moon(p[0],64)}<div><h3>${p[1]}</h3><p>${p[2]}</p><p><b>Photo tip:</b> ${p[3]}</p></div></div>`).join('')+'</div><div style="margin-top:12px">'+orbitHtml()+'</div>';
+  const gsouth=GS===null?document.body.classList.contains('south'):GS;
+  $('view').innerHTML=`<div class="${gsouth?'gs':'gn'}"><div class="note hemi-row" style="margin:0 0 12px"><span>${gsouth?'Showing the Southern Hemisphere view.':'Showing the Northern Hemisphere view.'}</span><button class="tog" data-gs="1">See the ${gsouth?'Northern':'Southern'} Hemisphere view</button></div><p class="note" style="margin:0 0 12px">From the Southern Hemisphere the Moon looks upside down compared with the north, so a waxing Moon is lit on the left instead of the right. The app picks the right view for the location you set.</p>`+'<div class="pg">'+PG.map(p=>`<div class="item">${moon(p[0],64)}<div><h3>${p[1]}</h3><p>${p[2]}</p><p><b>Photo tip:</b> ${p[3]}</p></div></div>`).join('')+'</div><div style="margin-top:12px">'+orbitHtml()+'</div></div>';
 }
 const FX=[
 ['The cycle','29.53 days','Days in a lunar cycle. From one New Moon to the next takes 29 days, 12 hours and 44 minutes on average. This is called the synodic month, and it is where the word "month" comes from. It is also the length of one day on the Moon: sunrise to sunrise takes about 29.5 Earth days, so any spot on the Moon gets roughly two weeks of daylight followed by two weeks of night.'],
@@ -318,17 +318,15 @@ function fxTab(){$('view').innerHTML='<div class="list">'+FX.map(f=>`<div class=
 function show(){TAB==='cal'?cal():TAB==='ev'?evTab():TAB==='fx'?fxTab():pgTab()}
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-t]');if(t){TAB=t.dataset.t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b===t));if(TAB==='ev'){EVY=Math.max(2026,Math.min(2050,now.getFullYear()));EVF='all';EVP=false;evTab(true)}else show();return}
+  if(e.target.closest('[data-gs]')){GS=!(GS===null?document.body.classList.contains('south'):GS);pgTab();return}
   if(e.target.closest('#totop')){window.scrollTo({top:0,behavior:'smooth'});return}
   if(e.target.closest('[data-past]')){EVP=!EVP;evTab(false);return}
   const m=e.target.closest('[data-m]');if(m){const v=+m.dataset.m;if(v===0){if(navigator.onLine!==false){try{location.reload();return}catch(x){}}Y=now.getFullYear();M=now.getMonth();SEL=key(now);loadWx(true)}else{M+=v;if(M<0){M=11;Y--}if(M>11){M=0;Y++}}cal();return}
   const d=e.target.closest('.day[data-k]');if(d){SEL=d.dataset.k;document.querySelectorAll('.day.sel').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');detail()}
 });
-$('hemi').addEventListener('click',()=>{
-  const s=document.body.classList.toggle('south');$('hemi').setAttribute('aria-pressed',s);
-  $('hemi').textContent=s?'Southern Hemisphere view':'Northern Hemisphere view';
-  try{localStorage.setItem('lunar-south',s?'1':'0')}catch(e){}
-});
-try{if(localStorage.getItem('lunar-south')==='1')$('hemi').click()}catch(e){}
+/* The Moon appears upside down from the Southern Hemisphere, so the pictures follow the saved location automatically. */
+function applyHemi(){document.body.classList.toggle('south',!!LOC&&LOC.lat<0)}
+let GS=null;
 const MN=['Wolf','Snow','Worm','Pink','Flower','Strawberry','Buck','Sturgeon','Corn','Hunter’s','Beaver','Cold'];
 function moonName(jd){
   const dt=toDate(jd),y=dt.getFullYear(),mo=dt.getMonth();
@@ -367,7 +365,7 @@ function rsHtml(y,m,d){
   return `<div class="rs"><div><b class="num">${f(r.rise)}</b><span>moonrise</span>${dr(r.rise,'rise')}</div><div><b class="num">${f(r.set)}</b><span>moonset</span>${dr(r.set,'set')}</div></div>${gn}`;
 }
 function renderLoc(){
-  loadWx();
+  applyHemi();loadWx();
   $('loc').innerHTML=LOC?`<span>Moonrise and moonset for ${Math.abs(LOC.lat).toFixed(2)}° ${LOC.lat<0?'S':'N'}, ${Math.abs(LOC.lon).toFixed(2)}° ${LOC.lon<0?'W':'E'}</span><button class="tog" data-loc="clear">Change</button><label class="hz-wrap">Horizon <select id="hz" aria-label="Horizon height">${[[0,'Flat and open (0°)'],[1,'Gentle hills (1°)'],[2,'Trees or low buildings (2°)'],[5,'Tall trees or houses (5°)'],[10,'Mountains or tall buildings (10°)']].concat([0,1,2,5,10].includes(HZ)?[]:[[HZ,'Custom ('+HZ+'°)']]).map(o=>`<option value="${o[0]}"${o[0]===HZ?' selected':''}>${o[1]}</option>`).join('')}</select></label>${locWarn()}`:`<button class="tog" data-loc="gps">Use my location</button><span>or</span><span class="cf"><input id="la" inputmode="decimal" placeholder="Latitude" aria-label="Latitude"><select id="lad" aria-label="North or south"><option value="N">N</option><option value="S">S</option></select></span><span class="cf"><input id="lo" inputmode="decimal" placeholder="Longitude" aria-label="Longitude"><select id="lod" aria-label="East or west"><option value="W"${new Date().getTimezoneOffset()>=0?' selected':''}>W</option><option value="E"${new Date().getTimezoneOffset()<0?' selected':''}>E</option></select></span><button class="tog" data-loc="set">Set</button><span id="lmsg" role="status"></span>`;
 }
 function saveLoc(lat,lon){LOC={lat,lon};try{localStorage.setItem('lunar-loc',JSON.stringify(LOC))}catch(e){}renderLoc();hero();if(TAB==='cal')detail()}
