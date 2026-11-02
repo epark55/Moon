@@ -53,7 +53,7 @@ button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .day .pc{font-size:.68rem;color:var(--muted)}
 .day .bd{font-size:.68rem;font-weight:600;color:var(--acc);text-align:center;line-height:1.1}
 .day .bd.sup{color:var(--gold)}
-.day i{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--gold)}.day i.gh{right:auto;left:6px;background:var(--acc)}.by{margin-top:-8px}.by a{color:var(--acc);font-weight:600}.today-mark{margin:4px 0 10px;padding:4px 12px;border-radius:999px;background:var(--acc);color:var(--bg);font-size:.8rem;font-weight:700;display:inline-block}.gh-note{margin:10px 0 0;font-size:.92rem}
+.day i{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--gold)}.day i.gh{right:auto;left:6px;background:var(--acc)}.by{margin-top:-8px}.by a{color:var(--acc);font-weight:600}.today-mark{margin:4px 0 10px;padding:4px 12px;border-radius:999px;background:var(--acc);color:var(--bg);font-size:.8rem;font-weight:700;display:inline-block}.rs .wx{color:var(--acc);font-weight:600}.gh-note{margin:10px 0 0;font-size:.92rem}
 .south .mn{transform:rotate(180deg)}
 .detail{margin-top:16px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;gap:16px;align-items:center}
 .detail h3{margin:0;font-size:1.2rem}.detail p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
@@ -87,6 +87,7 @@ button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-t="cal">Calendar</button><button role="tab" aria-selected="false" data-t="ev">Sky events</button><button role="tab" aria-selected="false" data-t="pg">Phase guide</button></div>
 <div id="view"></div>
 <p class="note">Times are shown in your local time zone. Phase times for October to December 2026 match published almanacs; other months are calculated and are typically accurate to within an hour or so. Illumination and age are calculated for local noon on each day. Moonrise and moonset are calculated for the coordinates you enter, shown in your device’s time zone; your location stays in this browser. Horizon height raises the horizon to match hills or buildings in the direction the Moon rises (0 is a flat horizon, and about 0.5 to 1 is common in hilly areas). A supermoon here means a full moon closer than about 227,000 miles.</p>
+<p class="note">Cloud cover forecasts for the next two weeks come from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>. Your coordinates are sent to them when you set a location, and nothing else is.</p>
 <p class="note by">Created by <a href="https://www.instagram.com/ed_p_photos/" target="_blank" rel="noopener">@ed_p_photos</a> on Instagram</p>
 </div>
 <script>
@@ -277,13 +278,23 @@ let PEND=null;
 const pc=s=>{const m=/^\s*(-?\d+(?:\.\d+)?)\s*°?\s*([NSEWnsew])?\s*$/.exec(s);if(!m)return null;let v=parseFloat(m[1]);if(m[2]&&/[swSW]/.test(m[2]))v=-Math.abs(v);return v};
 const tzOff=lon=>Math.abs(lon/15+new Date().getTimezoneOffset()/60);
 const locWarn=()=>LOC&&tzOff(LOC.lon)>4&&tzOff(-LOC.lon)<=4?`<span class="warn">This longitude is ${LOC.lon>0?'east':'west'} of Greenwich, but your device clock matches a ${LOC.lon>0?'western':'eastern'} location. If that is wrong, tap Change and enter it as ${Math.abs(LOC.lon)} ${LOC.lon>0?'W':'E'}.</span>`:'';
+let WX=null,WXK='';
+function loadWx(){
+  if(!LOC)return;
+  const k=LOC.lat.toFixed(2)+','+LOC.lon.toFixed(2);
+  if(WXK===k)return;WXK=k;WX=null;
+  try{fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LOC.lat.toFixed(3)}&longitude=${LOC.lon.toFixed(3)}&hourly=cloud_cover&past_days=1&forecast_days=16&timeformat=unixtime&timezone=GMT`).then(r=>r.ok?r.json():Promise.reject()).then(j=>{if(WXK!==k||!j.hourly)return;WX={t:j.hourly.time,c:j.hourly.cloud_cover};hero();if(TAB==='cal')detail()}).catch(()=>{WXK=''})}catch(e){WXK=''}
+}
+const cloudAt=jd=>{if(!WX||jd===null)return null;const t=(jd-2440587.5)*86400,i=Math.round((t-WX.t[0])/3600);if(i<0||i>=WX.t.length||Math.abs(WX.t[i]-t)>5400)return null;const v=WX.c[i];return v==null?null:Math.round(v)};
+const cloudWord=p=>p<=15?'clear sky':p<=40?'mostly clear':p<=70?'partly cloudy':p<=90?'mostly cloudy':'overcast';
 function rsHtml(y,m,d){
   if(!LOC)return '';
-  const r=riseSet(y,m,d,LOC.lat,LOC.lon),f=j=>j===null?'none':fmt(j,{hour:'numeric',minute:'2-digit'}),dr=j=>j===null?'':'<span>'+dirTxt(azAt(j,LOC.lat,LOC.lon))+'</span>';
+  const r=riseSet(y,m,d,LOC.lat,LOC.lon),f=j=>j===null?'none':fmt(j,{hour:'numeric',minute:'2-digit'}),dr=j=>{if(j===null)return '';const c=cloudAt(j);return '<span>'+dirTxt(azAt(j,LOC.lat,LOC.lon))+'</span>'+(c===null?'':'<span class="wx">'+c+'% clouds, '+cloudWord(c)+'</span>')};
   const gn=goldenNotes(y,m,d).map(o=>`<p class="gh-note"><b>Golden hour.</b> ${o.t}</p>`).join('');
   return `<div class="rs"><div><b class="num">${f(r.rise)}</b><span>moonrise</span>${dr(r.rise)}</div><div><b class="num">${f(r.set)}</b><span>moonset</span>${dr(r.set)}</div></div>${gn}`;
 }
 function renderLoc(){
+  loadWx();
   $('loc').innerHTML=LOC?`<span>Moonrise and moonset for ${Math.abs(LOC.lat).toFixed(2)}° ${LOC.lat<0?'S':'N'}, ${Math.abs(LOC.lon).toFixed(2)}° ${LOC.lon<0?'W':'E'}</span><button class="tog" data-loc="clear">Change</button><label class="hz-wrap">Horizon height <input id="hz" type="number" step="0.1" min="0" max="15" value="${HZ}" aria-label="Horizon height in degrees"> degrees</label>${locWarn()}`:`<button class="tog" data-loc="gps">Use my location</button><span>or</span><input id="la" inputmode="decimal" placeholder="Latitude, e.g. 40.3 N" aria-label="Latitude"><input id="lo" inputmode="decimal" placeholder="Longitude, e.g. 80.0 W" aria-label="Longitude"><button class="tog" data-loc="set">Set</button><span id="lmsg" role="status"></span>`;
 }
 function saveLoc(lat,lon){LOC={lat,lon};try{localStorage.setItem('lunar-loc',JSON.stringify(LOC))}catch(e){}renderLoc();hero();if(TAB==='cal')detail()}
