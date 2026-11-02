@@ -259,14 +259,14 @@ function evTab(sc){
   if(sc){const t=$('tdm');setTimeout(()=>window.scrollTo({top:Math.max(0,(t||$('view')).getBoundingClientRect().top+window.scrollY-(t?70:20)),behavior:'auto'}),30)}
 }
 function orbitHtml(){
-  const cx=252,cy=200,R=100,r=22,P=[[0,'New Moon'],[.125,'Waxing Crescent'],[.25,'First Quarter'],[.375,'Waxing Gibbous'],[.5,'Full Moon'],[.625,'Waning Gibbous'],[.75,'Last Quarter'],[.875,'Waning Crescent']];
+  const cx=258,cy=200,R=96,r=19,P=[[0,'New Moon'],[.125,'Waxing Crescent'],[.25,'First Quarter'],[.375,'Waxing Gibbous'],[.5,'Full Moon'],[.625,'Waning Gibbous'],[.75,'Last Quarter'],[.875,'Waning Crescent']];
   const pos=p=>[cx-R*Math.cos(2*Math.PI*p),cy+R*Math.sin(2*Math.PI*p)],cur=info(toJD(new Date()));
   let g='';
-  P.forEach(([p,n])=>{const [x,y]=pos(p),dx=-Math.cos(2*Math.PI*p),dy=Math.sin(2*Math.PI*p),lx=x+dx*(r+9),ly=y+dy*(r+9),an=Math.abs(dx)<.2||p===0?'middle':dx>0?'start':'end',ty=p===0?y+r+17:Math.abs(dx)<.2?(dy>0?ly+12:ly-2):ly+5;
-    g+=`<g transform="translate(${x-r} ${y-r})">${moon(p,2*r)}</g><text x="${p===0?x:lx}" y="${ty}" text-anchor="${an}" style="fill:var(--fg)" font-size="16" font-weight="600">${n}</text>`});
+  P.forEach(([p,n])=>{const [x,y]=pos(p),dx=-Math.cos(2*Math.PI*p),dy=Math.sin(2*Math.PI*p),lx=x+dx*(r+9),ly=y+dy*(r+9),mid=Math.abs(dx)<.2,an=mid?'middle':dx>0?'start':'end',ty=mid?(dy>0?ly+48:ly-2):ly+5,w=n.length*7.2,ix=mid?lx:dx>0?lx+w/2:lx-w/2;
+    g+=`<circle cx="${x}" cy="${y}" r="${r}" style="fill:var(--dark)" stroke="var(--line)"/><path d="M${x} ${y-r}A${r} ${r} 0 0 0 ${x} ${y+r}Z" style="fill:var(--lit)"/><g transform="translate(${ix-16} ${ty-48})">${moon(p,32)}</g><text x="${lx}" y="${ty}" text-anchor="${an}" style="fill:var(--fg)" font-size="15" font-weight="600">${n}</text>`});
   const [tx,ty]=pos(cur.p);
   g+=`<circle cx="${tx}" cy="${ty}" r="${r+6}" fill="none" stroke="var(--gold)" stroke-width="3"/>`;
-  return `<div class="item orb"><h3>Where the Sun, Moon and Earth are</h3><svg viewBox="0 0 480 400" role="img" aria-label="Diagram looking down on Earth with the Moon at eight points in its orbit, the Sun on the left lighting the half of the Moon that faces it" style="width:100%;height:auto;display:block;margin:8px 0">
+  return `<div class="item orb"><h3>Where the Sun, Moon and Earth are</h3><svg viewBox="0 0 480 410" role="img" aria-label="Diagram looking down on Earth with the Moon at eight points in its orbit, the Sun on the left lighting the half of the Moon that faces it" style="width:100%;height:auto;display:block;margin:8px 0">
 <circle cx="-34" cy="200" r="72" style="fill:var(--gold)"/><text x="2" y="206" style="fill:var(--bg)" font-size="16" font-weight="700">Sun</text>
 <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" style="stroke:var(--line)" stroke-width="2" stroke-dasharray="4 6"/>
 <circle cx="${cx}" cy="${cy}" r="28" style="fill:var(--acc)"/><path d="M${cx} ${cy-28}A28 28 0 0 0 ${cx} ${cy+28}Z" style="fill:#fff" opacity=".35"/><text x="${cx}" y="${cy+5}" text-anchor="middle" style="fill:#fff" font-size="14" font-weight="700">Earth</text>
