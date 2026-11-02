@@ -274,7 +274,7 @@ function orbitHtml(){
 ${g}</svg>
 <p>This is a view looking down from above Earth's north pole. It is not to scale, because the Moon is really about 30 Earth-widths away. The Sun always lights the half of the Moon that faces it. The phases change because, as the Moon circles Earth counterclockwise, we see more or less of that lit half. At New Moon the lit half faces away from us, and at Full Moon it faces us. The gold ring is where the Moon is today (${cur.name.toLowerCase()}).</p></div>`}
 function pgTab(){
-  $('view').innerHTML=orbitHtml()+'<div class="pg" style="margin-top:12px">'+PG.map(p=>`<div class="item">${moon(p[0],64)}<div><h3>${p[1]}</h3><p>${p[2]}</p><p><b>Photo tip:</b> ${p[3]}</p></div></div>`).join('')+'</div>';
+  $('view').innerHTML='<div class="pg">'+PG.map(p=>`<div class="item">${moon(p[0],64)}<div><h3>${p[1]}</h3><p>${p[2]}</p><p><b>Photo tip:</b> ${p[3]}</p></div></div>`).join('')+'</div><div style="margin-top:12px">'+orbitHtml()+'</div>';
 }
 const FX=[
 ['The cycle','29.53 days','Days in a lunar cycle. From one New Moon to the next takes 29 days, 12 hours and 44 minutes on average. This is called the synodic month, and it is where the word "month" comes from. It is also the length of one day on the Moon: sunrise to sunrise takes about 29.5 Earth days, so any spot on the Moon gets roughly two weeks of daylight followed by two weeks of night.'],
