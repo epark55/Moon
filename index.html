@@ -236,7 +236,7 @@ function phaseChanges(y,m,d){
   for(let t=t0;t<t1-1e-9;t+=1/48){const b=info(t+1/48).name;if(b!==a){let lo=t,hi=t+1/48;for(let k=0;k<20;k++){const mid=(lo+hi)/2;info(mid).name===a?lo=mid:hi=mid}out.push({jd:(lo+hi)/2,from:a,to:b});a=b}}
   return out;
 }
-const pcHtml=(y,m,d)=>phaseChanges(y,m,d).map(c=>`<p class="pch">Changes from ${c.from} to <b>${c.to}</b> at ${fmt(c.jd,{hour:'numeric',minute:'2-digit'})}.</p>`).join('');
+const pcHtml=(y,m,d)=>phaseChanges(y,m,d).filter(c=>!LOC||altAt(c.jd,LOC.lat,LOC.lon)>0).map(c=>`<p class="pch">Changes from ${c.from} to <b>${c.to}</b> at ${fmt(c.jd,{hour:'numeric',minute:'2-digit'})}.</p>`).join('');
 function hero(){
   const jd=toJD(new Date()),i=info(jd),nx=events(jd,jd+45).slice(0,4);
   $('hero').innerHTML=moon(i.p,150,noonJD(now.getFullYear(),now.getMonth(),now.getDate()))+`<div><h2>${i.name}</h2><p>${now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p><div class="facts"><div><b class="num">${Math.round(i.ill*100)}%</b><span>illuminated</span></div><div><b class="num">${i.age.toFixed(1)}</b><span>days old</span></div><div><b class="num">${(Math.round(moonPos(jd).km*0.621371/1000)*1000).toLocaleString()}</b><span>miles away</span></div></div>${pcHtml(now.getFullYear(),now.getMonth(),now.getDate())}${rsHtml(now.getFullYear(),now.getMonth(),now.getDate())}</div>`;
