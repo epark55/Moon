@@ -312,6 +312,7 @@ async function shareDay(){
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const es=events(jd-.5,jd+.5).filter(e=>key(toDate(e.jd))===SEL),sp=SPECIAL.filter(q=>inReg(q)&&q.keys.includes(SEL)&&!q.minor);
   const text=`${dt}: ${es.length?lab(es[0]):i.name}, ${Math.round(i.ill*100)}% illuminated, ${distTxt(jd)}. #moon #moonphase #lunarphotography`;
+  let file=null;
   try{
     const c=document.createElement('canvas');c.width=1080;c.height=1920;const x=c.getContext('2d');
     const g=x.createLinearGradient(0,0,0,1920);g.addColorStop(0,'#0d1326');g.addColorStop(1,'#1d2748');x.fillStyle=g;x.fillRect(0,0,1080,1920);
@@ -340,13 +341,15 @@ async function shareDay(){
       lines.slice(0,3).forEach((t,k)=>x.fillText(fit(t,940),540,yy+78+k*56));
       if(lines.length>3){x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('+ '+(lines.length-3)+' more',540,yy+78+3*56)}}
     x.setTransform(1,0,0,1,0,0);x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('Lunar moon calendar  ·  @ed_p_photos',540,1870);
-    const blob=await new Promise(r=>c.toBlob(r,'image/png')),file=new File([blob],'moon.png',{type:'image/png'});
+    const blob=await new Promise(r=>c.toBlob(r,'image/png'));file=new File([blob],'moon-'+SEL+'.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text});say('Shared.');return}
   }catch(err){if(err&&err.name==='AbortError'){say('');return}}
-  try{if(navigator.share){await navigator.share({text});say('Shared.');return}}catch(err){if(err&&err.name==='AbortError'){say('');return}}
+  let saved=false;
+  if(file){try{const u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);saved=true}catch(err){}}
+  if(!saved){try{if(navigator.share){await navigator.share({text});say('Shared.');return}}catch(err){if(err&&err.name==='AbortError'){say('');return}}}
   let ok=false;try{await navigator.clipboard.writeText(text);ok=true}catch(err){}
   if(!ok){const a=document.createElement('textarea');a.value=text;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{ok=document.execCommand('copy')}catch(err){}a.remove()}
-  say(ok?'Caption copied. Paste it into your post.':text);
+  say(saved?(ok?'Image saved to your downloads and caption copied.':'Image saved to your downloads.'):ok?'Caption copied. Paste it into your post.':text);
 }
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-loc]');
