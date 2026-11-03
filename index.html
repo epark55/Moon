@@ -202,7 +202,7 @@ const DIRS=['north','northeast','east','southeast','south','southwest','west','n
 const dirTxt=a=>DIRS[Math.round(a/45)%8]+' ('+Math.round(a)+'°)';
 function riseSet(y,m,d,lat,lon){
   const t0=toJD(new Date(y,m,d)),t1=toJD(new Date(y,m,d+1)),st=1/96;let rise=null,set=null,a=altAt(t0,lat,lon);
-  for(let t=t0;t<t1-1e-9;t+=st){const b=altAt(t+st,lat,lon);
+  for(let t=t0,q=0;t<t1-1e-5;q++,t=t0+q*st){const b=altAt(t+st,lat,lon);
     if((a<0)!==(b<0)){let lo=t,hi=t+st;for(let i=0;i<20;i++){const mid=(lo+hi)/2;((altAt(mid,lat,lon)<0)===(a<0))?lo=mid:hi=mid}
       const z=(lo+hi)/2;if(b>=0&&a<0){if(rise===null)rise=z}else if(set===null)set=z}
     a=b}
@@ -224,7 +224,7 @@ function moonLook(jd0,lat,lon){
 }
 function sunRS(y,m,d,lat,lon){
   const t0=toJD(new Date(y,m,d)),t1=toJD(new Date(y,m,d+1)),st=1/96;let rise=null,set=null,a=sunAlt(t0,lat,lon);
-  for(let t=t0;t<t1-1e-9;t+=st){const b=sunAlt(t+st,lat,lon);
+  for(let t=t0,q=0;t<t1-1e-5;q++,t=t0+q*st){const b=sunAlt(t+st,lat,lon);
     if((a<0)!==(b<0)){let lo=t,hi=t+st;for(let i=0;i<20;i++){const mid=(lo+hi)/2;((sunAlt(mid,lat,lon)<0)===(a<0))?lo=mid:hi=mid}
       const z=(lo+hi)/2;if(b>=0&&a<0){if(rise===null)rise=z}else if(set===null)set=z}
     a=b}
@@ -305,7 +305,7 @@ function belowNote(jd){
 }
 function phaseChanges(y,m,d){
   const t0=toJD(new Date(y,m,d)),t1=toJD(new Date(y,m,d+1)),out=[];let a=info(t0).name;
-  for(let t=t0;t<t1-1e-9;t+=1/48){const b=info(t+1/48).name;if(b!==a){let lo=t,hi=t+1/48;for(let k=0;k<20;k++){const mid=(lo+hi)/2;info(mid).name===a?lo=mid:hi=mid}out.push({jd:(lo+hi)/2,from:a,to:b});a=b}}
+  for(let t=t0,q=0;t<t1-1e-5;q++,t=t0+q*(1/48)){const b=info(t+1/48).name;if(b!==a){let lo=t,hi=t+1/48;for(let k=0;k<20;k++){const mid=(lo+hi)/2;info(mid).name===a?lo=mid:hi=mid}out.push({jd:(lo+hi)/2,from:a,to:b});a=b}}
   return out;
 }
 const pcHtml=(y,m,d)=>phaseChanges(y,m,d).filter(c=>!LOC||altAt(c.jd,LOC.lat,LOC.lon)>0).map(c=>`<p class="pch">Changes from ${c.from} to <b>${c.to}</b> at ${fmt(c.jd,{hour:'numeric',minute:'2-digit'})}.</p>`).join('');
