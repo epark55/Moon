@@ -140,6 +140,7 @@ body{font-size:17px}
 .tabs{gap:2px;padding:4px 3px}.tabs button{font-size:.9rem;letter-spacing:-.01em;padding:6px 0}
 @media (max-width:375px){.tabs button{font-size:.8rem}}
 .hero>.mn{width:min(80vw,320px);height:auto}
+.day .bd.ecl{color:#ff9a6b}.ecln{margin:10px 0;padding:10px 12px;border-radius:12px;background:rgba(255,120,60,.1);border:1px solid rgba(255,140,90,.35);color:#f4e3da;font-size:.92rem;line-height:1.45;text-align:left}.ecln b{color:#ffb894}
 </style>
 </head>
 <body>
@@ -309,9 +310,71 @@ function phaseChanges(y,m,d){
   return out;
 }
 const pcHtml=(y,m,d)=>phaseChanges(y,m,d).filter(c=>!LOC||altAt(c.jd,LOC.lat,LOC.lon)>0).map(c=>`<p class="pch">Changes from ${c.from} to <b>${c.to}</b> at ${fmt(c.jd,{hour:'numeric',minute:'2-digit'})}.</p>`).join('');
+/* Lunar eclipse geometry from the app's own Moon and Sun positions */
+const ECG={F:1.02};
+function eclSep(jd){
+  const R=Math.PI/180,m=moonPos(jd),s=sunEq(jd),b=m.dec*R,a=m.ra*R,d=-s.dec*R,c=(s.ra+180)*R;
+  return Math.acos(Math.min(1,Math.sin(b)*Math.sin(d)+Math.cos(b)*Math.cos(d)*Math.cos(a-c)))/R;
+}
+function eclRad(jd){
+  const R=Math.PI/180,km=moonPos(jd).km,pm=Math.asin(6378.14/km)/R,sm=0.2725076*pm;
+  const n=jd-2451545,ss=0.2666*(1+0.0167*Math.cos((n-2.5)*2*Math.PI/365.2422)),ps=0.00244;
+  return {sm,ru:ECG.F*(pm+ps-ss),rp:ECG.F*(pm+ps+ss)};
+}
+function eclFind(){
+  const out=[],T0=toJD(new Date(2026,0,1))-3,T1=toJD(new Date(2051,0,1));
+  let k=Math.floor((T0-2451564.7)/29.530588853);
+  for(;;k++){
+    const c=2451564.7+k*29.530588853;if(c>T1)break;if(c<T0)continue;
+    let lo=c-1.0,hi=c+1.0;
+    for(let i=0;i<40;i++){const a=lo+(hi-lo)/3,b=hi-(hi-lo)/3;eclSep(a)<eclSep(b)?hi=b:lo=a}
+    const tm=(lo+hi)/2,sp=eclSep(tm),r=eclRad(tm);
+    if(sp>r.rp+r.sm)continue;
+    const cross=lim=>{const f=(t)=>eclSep(t)-lim;let a=tm-0.2,b=tm;for(let i=0;i<40;i++){const m=(a+b)/2;f(m)>0?a=m:b=m}let a2=tm,b2=tm+0.2;for(let i=0;i<40;i++){const m=(a2+b2)/2;f(m)>0?b2=m:a2=m}return [(a+b)/2,(a2+b2)/2]};
+    const e={t:tm,sep:sp,um:(r.ru+r.sm-sp)/(2*r.sm),pm:(r.rp+r.sm-sp)/(2*r.sm)};
+    e.pen=cross(r.rp+r.sm);
+    if(sp<r.ru+r.sm){e.umb=cross(r.ru+r.sm);if(sp<r.ru-r.sm)e.tot=cross(r.ru-r.sm)}
+    e.kind=e.tot?'total':e.umb?'partial':'pen';
+    out.push(e);
+  }
+  return out;
+}
+
+let ECLS=null,ECLC=new Map(),ECLK='';
+function eclList(){if(!ECLS)ECLS=eclFind().filter(e=>e.kind!=='pen'||e.pm>=0.8);return ECLS}
+/* Is a lunar eclipse visible from the saved location during this local calendar day? */
+function eclDay(y,m0,d){
+  if(!LOC)return null;
+  const sig=LOC.lat+','+LOC.lon+','+HZ;if(sig!==ECLK){ECLK=sig;ECLC.clear()}
+  const ck=y+'-'+m0+'-'+d;if(ECLC.has(ck))return ECLC.get(ck);
+  const a=toJD(new Date(y,m0,d)),b=toJD(new Date(y,m0,d+1));let out=null;
+  for(const e of eclList()){
+    const w=e.umb||e.pen;if(w[1]<a||w[0]>b)continue;
+    const lo=Math.max(a,w[0]),hi=Math.min(b,w[1]);let f=null,l=null;
+    for(let t=lo;t<=hi;t+=1/288){if(altAt(t,LOC.lat,LOC.lon)>0){if(f===null)f=t;l=t}}
+    if(f===null)continue;
+    out={kind:e.kind,um:e.um,e,vis:[f,l],all:altAt(w[0],LOC.lat,LOC.lon)>0&&altAt(w[1],LOC.lat,LOC.lon)>0};break;
+  }
+  ECLC.set(ck,out);return out;
+}
+function eclStyle(x,glow){
+  const s=x.kind==='total'?1:x.kind==='partial'?Math.min(.85,.35+x.um*.5):.18;
+  return `filter:grayscale(1) sepia(${s.toFixed(2)}) saturate(${(1+1.6*s).toFixed(2)}) hue-rotate(${(-40*s).toFixed(0)}deg) brightness(${(1-.5*s).toFixed(2)}) contrast(${(1+.1*s).toFixed(2)})${glow?' drop-shadow(0 0 34px rgba(255,120,60,'+(.12+.2*s).toFixed(2)+'))':''}`;
+}
+function eclMoon(y,m0,d,svg,glow){const x=eclDay(y,m0,d);return x?svg.replace('<svg class="mn" ','<svg class="mn" style="'+eclStyle(x,glow)+'" '):svg}
+function eclHtml(y,m0,d){
+  const x=eclDay(y,m0,d);if(!x)return '';const e=x.e,t=j=>fmt(j,{hour:'numeric',minute:'2-digit'}),tz=fmt(x.vis[0],{timeZoneName:'short'}).split(' ').pop();
+  const nm=x.kind==='total'?'Total lunar eclipse':x.kind==='partial'?'Partial lunar eclipse':'Penumbral lunar eclipse';
+  let ph='';
+  if(x.kind==='total')ph=` The Moon enters Earth’s dark shadow at ${t(e.umb[0])}, is fully inside it from ${t(e.tot[0])} to ${t(e.tot[1])}, and leaves it at ${t(e.umb[1])}.`;
+  else if(x.kind==='partial')ph=` About ${Math.round(Math.min(1,e.um)*100)}% of the Moon is covered at the deepest point, around ${t(e.t)}.`;
+  else ph=` This is a faint dimming, deepest around ${t(e.t)}, that is hard to notice by eye.`;
+  const vis=x.all?' The whole eclipse is above your horizon.':` The Moon is above your horizon from ${t(x.vis[0])} to ${t(x.vis[1])}.`;
+  return `<p class="ecln"><b>${nm} visible from your location.</b>${ph}${vis} Times are ${tz}, and the Moon is shown with a tint to suggest the eclipse.</p>`;
+}
 function hero(){
   const jd=toJD(new Date()),i=info(jd),nx=events(jd,jd+45).slice(0,4);
-  $('hero').innerHTML=moon(i.p,208,noonJD(now.getFullYear(),now.getMonth(),now.getDate()))+`<div><h2>${i.name}</h2><p>${now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p><div class="facts"><div><b class="num">${Math.round(i.ill*100)}%</b><span>illuminated</span></div><div><b class="num">${i.age.toFixed(1)}</b><span>days old</span></div><div><b class="num">${(Math.round(moonPos(jd).km*0.621371/1000)*1000).toLocaleString()}</b><span>miles away</span></div></div>${pcHtml(now.getFullYear(),now.getMonth(),now.getDate())}${rsHtml(now.getFullYear(),now.getMonth(),now.getDate())}</div>`;
+  $('hero').innerHTML=eclMoon(now.getFullYear(),now.getMonth(),now.getDate(),moon(i.p,208,noonJD(now.getFullYear(),now.getMonth(),now.getDate())),true)+`<div><h2>${i.name}</h2><p>${now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p><div class="facts"><div><b class="num">${Math.round(i.ill*100)}%</b><span>illuminated</span></div><div><b class="num">${i.age.toFixed(1)}</b><span>days old</span></div><div><b class="num">${(Math.round(moonPos(jd).km*0.621371/1000)*1000).toLocaleString()}</b><span>miles away</span></div></div>${eclHtml(now.getFullYear(),now.getMonth(),now.getDate())}${pcHtml(now.getFullYear(),now.getMonth(),now.getDate())}${rsHtml(now.getFullYear(),now.getMonth(),now.getDate())}</div>`;
   $('next').innerHTML='<div class="nh">Coming up</div><div class="ng">'+nx.map(e=>`<div class="${e.sup?'sup':''}">${moon(e.q*.25,46)}<div><b>${lab(e)}</b><span>${fmt(e.jd)}</span></div></div>`).join('')+'</div>';
   $('tdate').textContent=now.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric',year:'numeric'});
 }
@@ -325,8 +388,8 @@ function cal(){
   for(let i=0;i<lead;i++)h+='<div class="day out"></div>';
   for(let d=1;d<=days;d++){
     const k=Y+'-'+(M+1)+'-'+d,i=info(dayJD(Y,M,d)),es=map[k]||[],sp=SPECIAL.some(s=>!s.minor&&inReg(s)&&s.keys.includes(k)),gh=LOC&&goldenNotes(Y,M,d).some(o=>o.strong);
-    const bd=es.map(e=>`<span class="bd ${e.sup?'sup':''}">${e.sup?'Supermoon':e.q===0?'New':e.q===2?'Full':e.q===1?'1st Qtr':'Last Qtr'}</span>`).join('');
-    h+=`<button class="day${k===todayK?' today':''}${k===SEL?' sel':''}" data-k="${k}" data-d="${d}"><span class="d">${d}</span>${sp?'<i title="Sky event"></i>':''}${gh?'<i class="gh" title="Moon near sunrise or sunset"></i>':''}${moon(i.p,41,noonJD(Y,M,d))}<span class="pc">${Math.round(i.ill*100)}%</span>${bd}</button>`;
+    const ex=eclDay(Y,M,d),bd=ex?'<span class="bd ecl">Eclipse</span>':es.map(e=>`<span class="bd ${e.sup?'sup':''}">${e.sup?'Supermoon':e.q===0?'New':e.q===2?'Full':e.q===1?'1st Qtr':'Last Qtr'}</span>`).join('');
+    h+=`<button class="day${k===todayK?' today':''}${k===SEL?' sel':''}" data-k="${k}" data-d="${d}"><span class="d">${d}</span>${sp?'<i title="Sky event"></i>':''}${gh?'<i class="gh" title="Moon near sunrise or sunset"></i>':''}${eclMoon(Y,M,d,moon(i.p,41,noonJD(Y,M,d)))}<span class="pc">${Math.round(i.ill*100)}%</span>${bd}</button>`;
   }
   h+='</div><div id="detail"></div>';
   $('view').innerHTML=h;
@@ -338,7 +401,7 @@ function detail(){
   const i=info(dayJD(y,m-1,d)),es=events(noonJD(y,m-1,d)-.5,noonJD(y,m-1,d)+.5).filter(e=>key(toDate(e.jd))===SEL);
   const sp=SPECIAL.filter(s=>inReg(s)&&s.keys.includes(SEL));
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-  $('detail').innerHTML=`<div class="detail">${moon(i.p,100,noonJD(y,m-1,d))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
+  $('detail').innerHTML=`<div class="detail">${eclMoon(y,m-1,d,moon(i.p,100,noonJD(y,m-1,d)))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${eclHtml(y,m-1,d)}${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
 }
 let EVF='all',EVP=false;const CATS=[['all','All'],['ecl','Eclipses'],['occ','Occultations'],['met','Meteors'],['pla','Planets'],['pho','Photo'],['cyc','Distance and tides'],['moon','Moon and seasons']];
 const cat=s=>/eclipse/i.test(s.t)?'ecl':/occult/i.test(s.t)?'occ':/meteor|Taurid|Leonid|Geminid|Quadrantid|Perseid/i.test(s.t)?'met':/opposition|elongation|conjunction|close to/i.test(s.t)?'pla':/earthshine/i.test(s.t)?'pho':/perigee|apogee|king tide|micromoon/i.test(s.t)?'cyc':'moon';
