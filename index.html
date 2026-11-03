@@ -133,6 +133,8 @@ body{font-size:17px}
 .detail p,.item,.pg p,.loc{color:#e2e7f6}
 .loc>span:first-child{font-size:.95rem}
 @media (max-width:560px){.facts span{font-size:.82rem}.ng b{font-size:.9rem}.ng span{font-size:.84rem}}
+.day .pc{font-size:.74rem;color:#e2e7f6;letter-spacing:0}.day{min-height:92px}.day .d{font-size:1rem}
+.item .mn,.detail .mn{flex:none}.ng>div>div{line-height:1.3}
 </style>
 </head>
 <body>
@@ -305,7 +307,7 @@ const pcHtml=(y,m,d)=>phaseChanges(y,m,d).filter(c=>!LOC||altAt(c.jd,LOC.lat,LOC
 function hero(){
   const jd=toJD(new Date()),i=info(jd),nx=events(jd,jd+45).slice(0,4);
   $('hero').innerHTML=moon(i.p,208,noonJD(now.getFullYear(),now.getMonth(),now.getDate()))+`<div><h2>${i.name}</h2><p>${now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p><div class="facts"><div><b class="num">${Math.round(i.ill*100)}%</b><span>illuminated</span></div><div><b class="num">${i.age.toFixed(1)}</b><span>days old</span></div><div><b class="num">${(Math.round(moonPos(jd).km*0.621371/1000)*1000).toLocaleString()}</b><span>miles away</span></div></div>${pcHtml(now.getFullYear(),now.getMonth(),now.getDate())}${rsHtml(now.getFullYear(),now.getMonth(),now.getDate())}</div>`;
-  $('next').innerHTML='<div class="nh">Coming up</div><div class="ng">'+nx.map(e=>`<div class="${e.sup?'sup':''}">${moon(e.q*.25,34)}<div><b>${lab(e)}</b><span>${fmt(e.jd)}</span></div></div>`).join('')+'</div>';
+  $('next').innerHTML='<div class="nh">Coming up</div><div class="ng">'+nx.map(e=>`<div class="${e.sup?'sup':''}">${moon(e.q*.25,46)}<div><b>${lab(e)}</b><span>${fmt(e.jd)}</span></div></div>`).join('')+'</div>';
   $('tdate').textContent=now.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric',year:'numeric'});
 }
 function cal(){
@@ -319,7 +321,7 @@ function cal(){
   for(let d=1;d<=days;d++){
     const k=Y+'-'+(M+1)+'-'+d,i=info(dayJD(Y,M,d)),es=map[k]||[],sp=SPECIAL.some(s=>!s.minor&&inReg(s)&&s.keys.includes(k)),gh=LOC&&goldenNotes(Y,M,d).some(o=>o.strong);
     const bd=es.map(e=>`<span class="bd ${e.sup?'sup':''}">${e.sup?'Supermoon':e.q===0?'New':e.q===2?'Full':e.q===1?'1st Qtr':'Last Qtr'}</span>`).join('');
-    h+=`<button class="day${k===todayK?' today':''}${k===SEL?' sel':''}" data-k="${k}" data-d="${d}"><span class="d">${d}</span>${sp?'<i title="Sky event"></i>':''}${gh?'<i class="gh" title="Moon near sunrise or sunset"></i>':''}${moon(i.p,30,noonJD(Y,M,d))}<span class="pc">${Math.round(i.ill*100)}%</span>${bd}</button>`;
+    h+=`<button class="day${k===todayK?' today':''}${k===SEL?' sel':''}" data-k="${k}" data-d="${d}"><span class="d">${d}</span>${sp?'<i title="Sky event"></i>':''}${gh?'<i class="gh" title="Moon near sunrise or sunset"></i>':''}${moon(i.p,41,noonJD(Y,M,d))}<span class="pc">${Math.round(i.ill*100)}%</span>${bd}</button>`;
   }
   h+='</div><div id="detail"></div>';
   $('view').innerHTML=h;
@@ -331,7 +333,7 @@ function detail(){
   const i=info(dayJD(y,m-1,d)),es=events(noonJD(y,m-1,d)-.5,noonJD(y,m-1,d)+.5).filter(e=>key(toDate(e.jd))===SEL);
   const sp=SPECIAL.filter(s=>inReg(s)&&s.keys.includes(SEL));
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-  $('detail').innerHTML=`<div class="detail">${moon(i.p,72,noonJD(y,m-1,d))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
+  $('detail').innerHTML=`<div class="detail">${moon(i.p,100,noonJD(y,m-1,d))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
 }
 let EVF='all',EVP=false;const CATS=[['all','All'],['ecl','Eclipses'],['occ','Occultations'],['met','Meteors'],['pla','Planets'],['pho','Photo'],['cyc','Distance and tides'],['moon','Moon and seasons']];
 const cat=s=>/eclipse/i.test(s.t)?'ecl':/occult/i.test(s.t)?'occ':/meteor|Taurid|Leonid|Geminid|Quadrantid|Perseid/i.test(s.t)?'met':/opposition|elongation|conjunction|close to/i.test(s.t)?'pla':/earthshine/i.test(s.t)?'pho':/perigee|apogee|king tide|micromoon/i.test(s.t)?'cyc':'moon';
@@ -347,7 +349,7 @@ function orbitHtml(){
   const pos=p=>[cx-R*Math.cos(2*Math.PI*p),cy+R*Math.sin(2*Math.PI*p)],cur=info(toJD(new Date()));
   let g='';
   P.forEach(([p,n])=>{const [x,y]=pos(p),dx=-Math.cos(2*Math.PI*p),dy=Math.sin(2*Math.PI*p),lx=x+dx*(r+9),ly=y+dy*(r+9),mid=Math.abs(dx)<.2,an=mid?'middle':dx>0?'start':'end',ty=mid?(dy>0?ly+48:ly-2):ly+5,w=n.length*7.2,ix=mid?lx:dx>0?lx+w/2:lx-w/2;
-    g+=`<circle cx="${x}" cy="${y}" r="${r}" style="fill:var(--dark)" stroke="var(--line)"/><path d="M${x} ${y-r}A${r} ${r} 0 0 0 ${x} ${y+r}Z" style="fill:var(--lit)"/><g transform="translate(${ix-16} ${ty-48})">${moon(p,32)}</g><text x="${lx}" y="${ty}" text-anchor="${an}" style="fill:var(--fg)" font-size="15" font-weight="600">${n}</text>`});
+    g+=`<circle cx="${x}" cy="${y}" r="${r}" style="fill:var(--dark)" stroke="var(--line)"/><path d="M${x} ${y-r}A${r} ${r} 0 0 0 ${x} ${y+r}Z" style="fill:var(--lit)"/><g transform="translate(${ix-16} ${ty-48})">${moon(p,40)}</g><text x="${lx}" y="${ty}" text-anchor="${an}" style="fill:var(--fg)" font-size="15" font-weight="600">${n}</text>`});
   const [tx,ty]=pos(cur.p);
   g+=`<circle cx="${tx}" cy="${ty}" r="${r+6}" fill="none" stroke="var(--gold)" stroke-width="3"/>`;
   return `<div class="item orb"><h3>Where the Sun, Moon and Earth are</h3><svg viewBox="0 0 480 410" role="img" aria-label="Diagram looking down on Earth with the Moon at eight points in its orbit, the Sun on the left lighting the half of the Moon that faces it" style="width:100%;height:auto;display:block;margin:8px 0">
@@ -358,7 +360,7 @@ ${g}</svg>
 <p>This is a view looking down from above Earth's north pole. It is not to scale, because the Moon is really about 30 Earth-widths away. The Sun always lights the half of the Moon that faces it. The phases change because, as the Moon circles Earth counterclockwise, we see more or less of that lit half. At New Moon the lit half faces away from us, and at Full Moon it faces us. The gold ring is where the Moon is today (${cur.name.toLowerCase()}).</p></div>`}
 function pgTab(){
   const gsouth=GS===null?document.body.classList.contains('south'):GS;
-  $('view').innerHTML=`<div class="${gsouth?'gs':'gn'}"><div class="note hemi-row" style="margin:0 0 12px"><span>${gsouth?'Showing the Southern Hemisphere view.':'Showing the Northern Hemisphere view.'}</span><button class="tog" data-gs="1">See the ${gsouth?'Northern':'Southern'} Hemisphere view</button></div><p class="note" style="margin:0 0 12px">From the Southern Hemisphere the Moon looks upside down compared with the north, so a waxing Moon is lit on the left instead of the right. The app picks the right view for the location you set.</p>`+'<div class="pg">'+PG.map(p=>`<div class="item">${moon(p[0],64)}<div><h3>${p[1]}</h3><p>${p[2]}</p><p><b>Photo tip:</b> ${p[3]}</p></div></div>`).join('')+'</div><div style="margin-top:12px">'+orbitHtml()+'</div></div>';
+  $('view').innerHTML=`<div class="${gsouth?'gs':'gn'}"><div class="note hemi-row" style="margin:0 0 12px"><span>${gsouth?'Showing the Southern Hemisphere view.':'Showing the Northern Hemisphere view.'}</span><button class="tog" data-gs="1">See the ${gsouth?'Northern':'Southern'} Hemisphere view</button></div><p class="note" style="margin:0 0 12px">From the Southern Hemisphere the Moon looks upside down compared with the north, so a waxing Moon is lit on the left instead of the right. The app picks the right view for the location you set.</p>`+'<div class="pg">'+PG.map(p=>`<div class="item">${moon(p[0],84)}<div><h3>${p[1]}</h3><p>${p[2]}</p><p><b>Photo tip:</b> ${p[3]}</p></div></div>`).join('')+'</div><div style="margin-top:12px">'+orbitHtml()+'</div></div>';
 }
 const FX=[
 ['The cycle','29.53 days','Days in a lunar cycle. From one New Moon to the next takes 29 days, 12 hours and 44 minutes on average. This is called the synodic month, and it is where the word "month" comes from. It is also the length of one day on the Moon: sunrise to sunrise takes about 29.5 Earth days, so any spot on the Moon gets roughly two weeks of daylight followed by two weeks of night.'],
