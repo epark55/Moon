@@ -535,7 +535,7 @@ async function shareDay(){
   const [y,m,d]=SEL.split('-').map(Number),jd=noonJD(y,m-1,d),dj=dayJD(y,m-1,d),i=info(dj),sm=$('smsg'),say=t=>{if(sm)sm.textContent=t};
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const es=events(jd-.5,jd+.5).filter(e=>key(toDate(e.jd))===SEL),sp=SPECIAL.filter(q=>inReg(q)&&q.keys.includes(SEL)&&!q.minor);
-  const text=`${dt}: ${es.length?lab(es[0]):i.name}, ${Math.round(i.ill*100)}% illuminated, ${distTxt(dj)}. #moon #moonphase #lunarphotography`;
+  const ex=eclDay(y,m-1,d),text=`${dt}: ${es.length?lab(es[0]):i.name}, ${Math.round(i.ill*100)}% illuminated, ${distTxt(dj)}. #moon #moonphase #lunarphotography${ex&&ex.kind!=='pen'?' #lunareclipse':''}`;
   let file=null;
   try{
     const c=document.createElement('canvas');c.width=1080;c.height=1920;const x=c.getContext('2d');
@@ -545,7 +545,12 @@ async function shareDay(){
       q=lk.q*Math.PI/180,mr=-((lk.chi-lk.q)-(i.p<.5?270:90))*Math.PI/180,mpath=new Path2D(moon(i.p,640).match(/<path d="([^"]+)"/)[1]);
     x.save();x.translate(120,120);x.scale(1.3125,1.3125);x.fillStyle='#2a3453';x.beginPath();x.arc(320,320,319,0,7);x.fill();
     x.save();x.beginPath();x.arc(320,320,319,0,7);x.clip();x.translate(320,320);x.rotate(q);x.translate(-320,-320);x.globalAlpha=.2;x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();
-    x.save();x.translate(320,320);x.rotate(mr);x.translate(-320,-320);x.clip(mpath);x.translate(320,320);x.rotate(q-mr);x.translate(-320,-320);x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();x.restore();x.translate(0,90);
+    x.save();x.translate(320,320);x.rotate(mr);x.translate(-320,-320);x.clip(mpath);x.translate(320,320);x.rotate(q-mr);x.translate(-320,-320);x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();x.restore();
+    if(ex){try{const s0=ex.kind==='total'?1:ex.kind==='partial'?Math.min(.85,.35+ex.um*.5):.18,id=x.getImageData(120,120,840,840),D=id.data,rr=418*418;
+      for(let py=0;py<840;py++)for(let px=0;px<840;px++){const dx=px-420,dy=py-420;if(dx*dx+dy*dy>rr)continue;const k=(py*840+px)*4,L=.299*D[k]+.587*D[k+1]+.114*D[k+2];
+        D[k]=D[k]*(1-s0)+L*.74*s0;D[k+1]=D[k+1]*(1-s0)+L*.36*s0;D[k+2]=D[k+2]*(1-s0)+L*.22*s0}
+      x.putImageData(id,120,120)}catch(e2){}}
+    x.translate(0,90);
     const fit=(t,w)=>{while(t.length>3&&x.measureText(t).width>w)t=t.slice(0,-2).trimEnd();return t},CR='#f1ead0',MU='#aab4d0';
     x.textAlign='center';x.fillStyle=CR;x.font='600 84px Georgia, serif';x.fillText(fit(i.name,960),540,980);
     x.fillStyle=MU;x.font='40px Georgia, serif';x.fillText(new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'}),540,1044);
@@ -560,8 +565,9 @@ async function shareDay(){
       col(r.rise,'moonrise',320);col(r.set,'moonset',760);yy+=250;
     }
     const lines=[];es.forEach(e=>lines.push(lab(e)+' at '+fmt(e.jd,{hour:'numeric',minute:'2-digit'})));
-    const nw=t=>t.toLowerCase().replace(/[^a-z ]/g,' ').split(/\s+/).filter(Boolean);sp.forEach(s2=>{const w=nw(s2.t),all=nw(lines.join(' '));if(!w.every(q=>all.includes(q)))lines.push(s2.t)});
+    const nw=t=>t.toLowerCase().replace(/[^a-z ]/g,' ').split(/\s+/).filter(Boolean);sp.filter(s2=>!(ex&&/lunar eclipse/i.test(s2.t))).forEach(s2=>{const w=nw(s2.t),all=nw(lines.join(' '));if(!w.every(q=>all.includes(q)))lines.push(s2.t)});
     if(LOC){const gh=goldenNotes(y,m-1,d).find(o=>o.strong);if(gh)lines.push('Golden hour moonrise or moonset')}
+    if(ex){const tt=j=>fmt(j,{hour:'numeric',minute:'2-digit'});lines.unshift(ex.kind==='total'?'Total lunar eclipse, totality '+tt(ex.e.tot[0])+' to '+tt(ex.e.tot[1]):ex.kind==='partial'?'Partial lunar eclipse, deepest at '+tt(ex.e.t):'Penumbral lunar eclipse at '+tt(ex.e.t))}
     if(lines.length){x.strokeStyle='#3a466e';x.beginPath();x.moveTo(90,yy+20);x.lineTo(990,yy+20);x.stroke();x.fillStyle=CR;x.font='600 38px Georgia, serif';
       lines.slice(0,3).forEach((t,k)=>x.fillText(fit(t,940),540,yy+78+k*56));
       if(lines.length>3){x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('+ '+(lines.length-3)+' more',540,yy+78+3*56)}}
