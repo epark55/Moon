@@ -243,7 +243,10 @@ function goldenNotes(y,m,d){
 function info(jd){
   let n=Math.floor((jd-E0)/SYN);
   while(ev(n+1,0)<=jd)n++; while(ev(n,0)>jd)n--;
-  const a=ev(n,0),b=ev(n+1,0),p=(jd-a)/(b-a),age=jd-a;
+  const a=ev(n,0),age=jd-a;
+  /* Phase fraction runs evenly between the verified quarter times (new, first quarter, full, last quarter, new), so the percent lit peaks at the real full Moon */
+  const Q=[a,ev(n,1),ev(n,2),ev(n,3),ev(n+1,0)];let qi=3;for(let i=0;i<4;i++)if(jd<Q[i+1]){qi=i;break}
+  const p=(qi+(jd-Q[qi])/(Q[qi+1]-Q[qi]))*.25;
   const names=[[.0339,'New Moon'],[.2161,'Waxing Crescent'],[.2839,'First Quarter'],[.4661,'Waxing Gibbous'],[.5339,'Full Moon'],[.7161,'Waning Gibbous'],[.7839,'Last Quarter'],[.9661,'Waning Crescent'],[2,'New Moon']];
   return{p,age,ill:(1-Math.cos(2*Math.PI*p))/2,name:names.find(x=>p<x[0])[1]};
 }
