@@ -526,7 +526,10 @@ function rsHtml(y,m,d,live){
   if(live){const nj=toJD(new Date()),n=riseSet(y,m,d+1,LOC.lat,LOC.lon);if(r.rise!==null&&nj>r.rise+4/24&&n.rise!==null){r.rise=n.rise;tr=true}if(r.set!==null&&nj>r.set&&n.set!==null){r.set=n.set;ts=true}}
   const f=j=>j===null?'none':fmt(j,{hour:'numeric',minute:'2-digit'}),dr=(j,kind)=>{if(j===null){const n=nextRS(y,m,d,kind);return '<span>'+(n===null?'':'no '+(kind==='rise'?'moonrise':'moonset')+' this day, next is '+fmt(n,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+'</span></div>'}const c=cloudAt(j);const az=azAt(j,LOC.lat,LOC.lon);return '<span>'+dirTxt(az)+' · '+Math.round(info(j).ill*100)+'%</span>'+(c===null?'':'<span class="wx">'+c+'% clouds, '+cloudWord(c)+'</span>')+'</div>'+compass(az)};
   const gn=goldenNotes(y,m,d).map(o=>`<p class="gh-note"><b>Golden hour.</b> ${o.t}</p>`).join('');
-  return `<div class="rs"><div><div class="rst"><b class="num">${f(r.rise)}</b><span>moonrise${tr?' tomorrow':''}</span>${dr(r.rise,'rise')}</div><div><div class="rst"><b class="num">${f(r.set)}</b><span>moonset${ts?' tomorrow':''}</span>${dr(r.set,'set')}</div></div>${gn}`;
+  /* Show the two in the order they happen: on days when moonset comes first, moonset leads */
+  const RI=`<div><div class="rst"><b class="num">${f(r.rise)}</b><span>moonrise${tr?' tomorrow':''}</span>${dr(r.rise,'rise')}</div>`,SE=`<div><div class="rst"><b class="num">${f(r.set)}</b><span>moonset${ts?' tomorrow':''}</span>${dr(r.set,'set')}</div>`;
+  const setFirst=r.rise!==null&&r.set!==null&&r.set<r.rise;
+  return `<div class="rs">${setFirst?SE+RI:RI+SE}</div>${gn}`;
 }
 function renderLoc(){
   applyHemi();loadWx();
@@ -568,7 +571,7 @@ async function shareDay(){
       x.strokeStyle='#3a466e';x.lineWidth=2;x.beginPath();x.moveTo(90,yy);x.lineTo(990,yy);x.stroke();
       const col=(j,l,cx)=>{x.fillStyle=CR;x.font='600 58px Georgia, serif';x.fillText(j===null?'none':fmt(j,{hour:'numeric',minute:'2-digit'}),cx,yy+86);x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText(l,cx,yy+130);
         if(j!==null){x.fillText(dirTxt(azAt(j,LOC.lat,LOC.lon))+' · '+Math.round(info(j).ill*100)+'%',cx,yy+172);const cl=cloudAt(j);if(cl!==null){x.fillStyle='#8fb4ea';x.fillText(cl+'% clouds, '+cloudWord(cl),cx,yy+214)}}};
-      col(r.rise,'moonrise',320);col(r.set,'moonset',760);yy+=250;
+      if(r.rise!==null&&r.set!==null&&r.set<r.rise){col(r.set,'moonset',320);col(r.rise,'moonrise',760)}else{col(r.rise,'moonrise',320);col(r.set,'moonset',760)};yy+=250;
     }
     const lines=[];es.forEach(e=>lines.push(lab(e)+' at '+fmt(e.jd,{hour:'numeric',minute:'2-digit'})));
     const nw=t=>t.toLowerCase().replace(/[^a-z ]/g,' ').split(/\s+/).filter(Boolean);sp.filter(s2=>!(ex&&/lunar eclipse/i.test(s2.t))).forEach(s2=>{const w=nw(s2.t),all=nw(lines.join(' '));if(!w.every(q=>all.includes(q)))lines.push(s2.t)});
