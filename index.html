@@ -553,7 +553,7 @@ async function shareDay(){
     const south=document.body.classList.contains('south'),la=LOC?LOC.lat:(south?-35:35),lo=LOC?LOC.lon:-new Date().getTimezoneOffset()/4,lk=moonLook(jd-.5,la,lo),
       q=lk.q*Math.PI/180,mr=-((lk.chi-lk.q)-(i.p<.5?270:90))*Math.PI/180,mpath=new Path2D(moon(i.p,640).match(/<path d="([^"]+)"/)[1]);
     /* ---- the day's information, in the same order as the day view below the calendar ---- */
-    const SANS='-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif',SERIF='Georgia, serif',CR='#f1ead0',TX='#e8ecf8',MU='#aab4d0',PAD=70,TW=940;
+    const SANS='-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif',SERIF='Georgia, serif',CR='#f1ead0',TX='#f7f9ff',MU='#d6dcf0',PAD=70,TW=940;
     const strip=h=>h.replace(/<[^>]+>/g,''),sents=t=>t.match(/[^.!?]+[.!?]+/g)||[t],tm=j=>fmt(j,{hour:'numeric',minute:'2-digit'});
     const hd=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})+': '+i.name;
     const sum=[{t:`${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dj)}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${strip(belowNote(e.jd))}`).join('')}`}];
@@ -566,37 +566,37 @@ async function shareDay(){
     const fnt=(b,s)=>(b?'700 ':'400 ')+s+'px '+SANS;
     const wrap=(segs,fs,w)=>{const ln=[];let cur=[],cw=0;segs.forEach(sg=>{x.font=fnt(sg.b,fs);sg.t.split(/\s+/).filter(Boolean).forEach(wd=>{const ww=x.measureText(wd).width,sp=cur.length?x.measureText(' ').width:0;if(cur.length&&cw+sp+ww>w){ln.push(cur);cur=[];cw=0}cw+=(cur.length?x.measureText(' ').width:0)+ww;cur.push({t:wd,b:sg.b})})});if(cur.length)ln.push(cur);return ln};
     const para=(segs,x0,y0,fs,lh,w,col)=>{const ln=wrap(segs,fs,w);if(!DRY)ln.forEach((l,k)=>{let px=x0;l.forEach((wd,j)=>{x.font=fnt(wd.b,fs);x.fillStyle=wd.b?CR:col;x.textAlign='left';x.fillText(wd.t,px,y0+k*lh);px+=x.measureText(wd.t+' ').width})});return ln.length*lh};
-    const compass=(cx,cy,R,az)=>{x.strokeStyle='#3a466e';x.lineWidth=2.5;x.beginPath();x.arc(cx,cy,R,0,7);x.stroke();
+    const compass=(cx,cy,R,az)=>{x.strokeStyle='#9aa8d8';x.lineWidth=3.5;x.beginPath();x.arc(cx,cy,R,0,7);x.stroke();
       for(let k=0;k<8;k++){const a=k*Math.PI/4,r1=k%2?R-8:R-13;x.beginPath();x.moveTo(cx+Math.sin(a)*R,cy-Math.cos(a)*R);x.lineTo(cx+Math.sin(a)*r1,cy-Math.cos(a)*r1);x.stroke()}
-      x.fillStyle=MU;x.font='600 17px '+SANS;x.textAlign='center';[['N',0],['E',1],['S',2],['W',3]].forEach(([l,k])=>x.fillText(l,cx+Math.sin(k*Math.PI/2)*(R-27),cy-Math.cos(k*Math.PI/2)*(R-27)+6));
-      const a=az*Math.PI/180,px=cx+Math.sin(a)*R,py=cy-Math.cos(a)*R;x.strokeStyle='#f2c35b';x.setLineDash([5,5]);x.beginPath();x.moveTo(cx,cy);x.lineTo(px,py);x.stroke();x.setLineDash([]);
-      x.fillStyle='#c9cde0';x.beginPath();x.arc(px,py,12,0,7);x.fill();x.stroke()};
+      x.fillStyle='#e9edfb';x.font='700 24px '+SANS;x.textAlign='center';[['N',0],['E',1],['S',2],['W',3]].forEach(([l,k])=>x.fillText(l,cx+Math.sin(k*Math.PI/2)*(R-32),cy-Math.cos(k*Math.PI/2)*(R-32)+8));
+      const a=az*Math.PI/180,px=cx+Math.sin(a)*R,py=cy-Math.cos(a)*R;x.strokeStyle='#ffd573';x.lineWidth=3.5;x.setLineDash([7,6]);x.beginPath();x.moveTo(cx,cy);x.lineTo(px,py);x.stroke();x.setLineDash([]);
+      x.fillStyle='#e6e9f6';x.beginPath();x.arc(px,py,14,0,7);x.fill();x.stroke()};
     const riseSetBlock=y0=>{if(!rs)return 0;
-      if(!DRY){x.strokeStyle='#3a466e';x.lineWidth=2;x.beginPath();x.moveTo(PAD,y0);x.lineTo(1080-PAD,y0);x.stroke()}
+      if(!DRY){x.strokeStyle='#5d6c9e';x.lineWidth=2;x.beginPath();x.moveTo(PAD,y0);x.lineTo(1080-PAD,y0);x.stroke()}
       const items=(rs.rise!==null&&rs.set!==null&&rs.set<rs.rise)?[[rs.set,'moonset',PAD],[rs.rise,'moonrise',560]]:[[rs.rise,'moonrise',PAD],[rs.set,'moonset',560]];
-      const dl=items.map(([j])=>j===null?1:wrap([{t:dirTxt(azAt(j,LOC.lat,LOC.lon))+' · '+Math.round(info(j).ill*100)+'%'}],33,310).length),nl=Math.max(...dl),hasCl=items.some(([j])=>j!==null&&cloudAt(j)!==null);
-      const cy=y0+190+nl*42;
-      if(!DRY)items.forEach(([j,l,cx0])=>{x.textAlign='left';x.fillStyle=MU;x.font='600 28px '+SANS;try{x.letterSpacing='3px'}catch(e){}x.fillText(l.toUpperCase(),cx0,y0+56);try{x.letterSpacing='0px'}catch(e){}
-        x.fillStyle=CR;x.font='600 70px Georgia, serif';x.fillText(j===null?'none':tm(j),cx0,y0+132);
-        if(j!==null){const az=azAt(j,LOC.lat,LOC.lon);para([{t:dirTxt(az)+' · '+Math.round(info(j).ill*100)+'%'}],cx0,y0+184,33,42,310,MU);compass(cx0+392,y0+98,60,az);const cl=cloudAt(j);if(cl!==null){x.textAlign='left';x.fillStyle='#8fb4ea';x.font=fnt(0,31);x.fillText(cl+'% clouds, '+cloudWord(cl),cx0,cy)}}});
-      return (hasCl?cy-y0+34:cy-y0-6)+14};
+      const nl=2,hasCl=items.some(([j])=>j!==null&&cloudAt(j)!==null);
+      const cy=y0+206+nl*47;
+      if(!DRY)items.forEach(([j,l,cx0])=>{x.textAlign='left';x.fillStyle=MU;x.font='700 31px '+SANS;try{x.letterSpacing='3px'}catch(e){}x.fillText(l.toUpperCase(),cx0,y0+60);try{x.letterSpacing='0px'}catch(e){}
+        x.fillStyle=CR;x.font='600 70px Georgia, serif';x.fillText(j===null?'none':tm(j),cx0,y0+140);
+        if(j!==null){const az=azAt(j,LOC.lat,LOC.lon);x.fillStyle=MU;x.font=fnt(0,37);x.fillText(dirTxt(az),cx0,y0+198);x.fillText(Math.round(info(j).ill*100)+'% lit',cx0,y0+245);compass(cx0+394,y0+98,60,az);const cl=cloudAt(j);if(cl!==null){x.textAlign='left';x.fillStyle='#b9d6ff';x.font=fnt(0,35);x.fillText(cl+'% clouds, '+cloudWord(cl),cx0,cy)}}});
+      return (hasCl?cy-y0+38:cy-y0-8)+16};
     const content=(tier,y0)=>{let yy=y0;
       let h=0;
       if(!DRY){x.fillStyle=CR;x.textAlign='left'}
-      const hl=(()=>{x.font='700 66px Georgia, serif';const ws=hd.split(' '),ln=[];let cur='';ws.forEach(wd=>{const t2=cur?cur+' '+wd:wd;if(cur&&x.measureText(t2).width>TW){ln.push(cur);cur=wd}else cur=t2});ln.push(cur);return ln})();
-      hl.forEach((l,k)=>{if(!DRY){x.font='700 66px Georgia, serif';x.fillStyle=CR;x.textAlign='left';x.fillText(l,PAD,yy+56+k*76)}});yy+=hl.length*76+14;
-      const P=(segs,fs=38,lh=54)=>{yy+=para(segs,PAD,yy+38,fs,lh,TW,TX)+18};
+      const hl=(()=>{x.font='700 74px Georgia, serif';const ws=hd.split(' '),ln=[];let cur='';ws.forEach(wd=>{const t2=cur?cur+' '+wd:wd;if(cur&&x.measureText(t2).width>TW){ln.push(cur);cur=wd}else cur=t2});ln.push(cur);return ln})();
+      hl.forEach((l,k)=>{if(!DRY){x.font='700 74px Georgia, serif';x.fillStyle=CR;x.textAlign='left';x.fillText(l,PAD,yy+62+k*84)}});yy+=hl.length*84+14;
+      const P=(segs,fs=43,lh=60)=>{yy+=para(segs,PAD,yy+42,fs,lh,TW,TX)+20};
       P(sum);
       if(eclP)P(tier>=3?[eclP[0]]:tier===2?[eclP[0],{t:' '+sents(eclP[1].t.trim())[0]}]:eclP);
       pch.forEach(s2=>P(s2));
       (tier>=4?spP.slice(0,1):spP).forEach(s2=>P(tier>=3?[{t:s2.t,b:1}]:tier===2?[{t:s2.t,b:1},{t:' '+sents(s2.x)[0]}]:[{t:s2.t,b:1},{t:' '+s2.x}]));
       yy+=10;yy+=riseSetBlock(yy);
       if(ghP.length){const gs=ghP.map(t=>{const a=sents(t);return tier===1?t:a.slice(0,tier===2?2:1).join(' ')});
-        const segs=[{t:'Golden hour.',b:1},{t:' '+gs[0]}],ln=wrap(segs,35,TW-56),bh=ln.length*50+48;
-        if(!DRY){x.fillStyle='#2a3250';x.strokeStyle='#3a466e';x.lineWidth=2;x.beginPath();x.roundRect(PAD,yy,TW,bh,26);x.fill();x.stroke();para(segs,PAD+28,yy+56,35,50,TW-56,TX)}
+        const segs=[{t:'Golden hour.',b:1},{t:' '+gs[0]}],ln=wrap(segs,40,TW-56),bh=ln.length*56+52;
+        if(!DRY){x.fillStyle='#2d3556';x.strokeStyle='#5d6c9e';x.lineWidth=2;x.beginPath();x.roundRect(PAD,yy,TW,bh,26);x.fill();x.stroke();para(segs,PAD+28,yy+60,40,56,TW-56,TX)}
         yy+=bh+10}
       return yy};
-    let tier=1,H;for(;tier<=4;tier++){H=content(tier,0);if(1920-100-56-40-H>=700||tier===4)break}
+    let tier=1,H;for(;tier<=4;tier++){H=content(tier,0);if(1920-100-56-40-H>=640||tier===4)break}
     const D=Math.round(Math.max(520,Math.min(940,1920-100-56-40-H))),MX=Math.round((1080-D)/2),MY=56,S=D/640;
     x.save();x.translate(MX,MY);x.scale(S,S);x.fillStyle='#2a3453';x.beginPath();x.arc(320,320,319,0,7);x.fill();
     x.save();x.beginPath();x.arc(320,320,319,0,7);x.clip();x.translate(320,320);x.rotate(q);x.translate(-320,-320);x.globalAlpha=.2;x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();
@@ -606,7 +606,7 @@ async function shareDay(){
         D2[k]=D2[k]*(1-s0)+L*.74*s0;D2[k+1]=D2[k+1]*(1-s0)+L*.36*s0;D2[k+2]=D2[k+2]*(1-s0)+L*.22*s0}
       x.putImageData(id,MX,MY)}catch(e2){}}
     DRY=false;content(tier,MY+D+40);
-    x.textAlign='center';x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('Lunar Moon Calendar  ·  @ed_p_photos',540,1884);
+    x.textAlign='center';x.fillStyle=MU;x.font='32px Georgia, serif';x.fillText('Lunar Moon Calendar  ·  @ed_p_photos',540,1884);
     const blob=await new Promise(r=>c.toBlob(r,'image/png'));file=new File([blob],'moon-'+SEL+'.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text});say('Shared.');return}
   }catch(err){if(err&&err.name==='AbortError'){say('');return}}
