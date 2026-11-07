@@ -552,35 +552,59 @@ async function shareDay(){
     const MI=new Image();MI.src=document.querySelector('#mimg image').getAttribute('href');try{await MI.decode()}catch(e){}
     const south=document.body.classList.contains('south'),la=LOC?LOC.lat:(south?-35:35),lo=LOC?LOC.lon:-new Date().getTimezoneOffset()/4,lk=moonLook(jd-.5,la,lo),
       q=lk.q*Math.PI/180,mr=-((lk.chi-lk.q)-(i.p<.5?270:90))*Math.PI/180,mpath=new Path2D(moon(i.p,640).match(/<path d="([^"]+)"/)[1]);
-    x.save();x.translate(120,120);x.scale(1.3125,1.3125);x.fillStyle='#2a3453';x.beginPath();x.arc(320,320,319,0,7);x.fill();
+    /* ---- the day's information, in the same order as the day view below the calendar ---- */
+    const SANS='-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif',SERIF='Georgia, serif',CR='#f1ead0',TX='#e8ecf8',MU='#aab4d0',PAD=70,TW=940;
+    const strip=h=>h.replace(/<[^>]+>/g,''),sents=t=>t.match(/[^.!?]+[.!?]+/g)||[t],tm=j=>fmt(j,{hour:'numeric',minute:'2-digit'});
+    const hd=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})+': '+i.name;
+    const sum=[{t:`${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dj)}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${strip(belowNote(e.jd))}`).join('')}`}];
+    const eh=eclHtml(y,m-1,d),em=eh&&eh.match(/<b>(.*?)<\/b>(.*)<\/p>/),eclP=em?[{t:em[1],b:1},{t:em[2]}]:null;
+    const pch=phaseChanges(y,m-1,d).filter(cc=>!LOC||altAt(cc.jd,LOC.lat,LOC.lon)>0).map(cc=>[{t:'Changes from '+cc.from+' to '},{t:cc.to,b:1},{t:' at '+tm(cc.jd)+'.'}]);
+    const spP=SPECIAL.filter(s2=>inReg(s2)&&s2.keys.includes(SEL)&&!(ex&&/lunar eclipse/i.test(s2.t))).map(s2=>({t:s2.t+'.',x:strip(xt(s2))}));
+    const ghP=LOC?goldenNotes(y,m-1,d).map(o=>strip(o.t)):[];
+    const rs=LOC?riseSet(y,m-1,d,LOC.lat,LOC.lon):null;
+    let DRY=true;
+    const fnt=(b,s)=>(b?'700 ':'400 ')+s+'px '+SANS;
+    const wrap=(segs,fs,w)=>{const ln=[];let cur=[],cw=0;segs.forEach(sg=>{x.font=fnt(sg.b,fs);sg.t.split(/\s+/).filter(Boolean).forEach(wd=>{const ww=x.measureText(wd).width,sp=cur.length?x.measureText(' ').width:0;if(cur.length&&cw+sp+ww>w){ln.push(cur);cur=[];cw=0}cw+=(cur.length?x.measureText(' ').width:0)+ww;cur.push({t:wd,b:sg.b})})});if(cur.length)ln.push(cur);return ln};
+    const para=(segs,x0,y0,fs,lh,w,col)=>{const ln=wrap(segs,fs,w);if(!DRY)ln.forEach((l,k)=>{let px=x0;l.forEach((wd,j)=>{x.font=fnt(wd.b,fs);x.fillStyle=wd.b?CR:col;x.textAlign='left';x.fillText(wd.t,px,y0+k*lh);px+=x.measureText(wd.t+' ').width})});return ln.length*lh};
+    const compass=(cx,cy,R,az)=>{x.strokeStyle='#3a466e';x.lineWidth=2.5;x.beginPath();x.arc(cx,cy,R,0,7);x.stroke();
+      for(let k=0;k<8;k++){const a=k*Math.PI/4,r1=k%2?R-8:R-13;x.beginPath();x.moveTo(cx+Math.sin(a)*R,cy-Math.cos(a)*R);x.lineTo(cx+Math.sin(a)*r1,cy-Math.cos(a)*r1);x.stroke()}
+      x.fillStyle=MU;x.font='600 17px '+SANS;x.textAlign='center';[['N',0],['E',1],['S',2],['W',3]].forEach(([l,k])=>x.fillText(l,cx+Math.sin(k*Math.PI/2)*(R-27),cy-Math.cos(k*Math.PI/2)*(R-27)+6));
+      const a=az*Math.PI/180,px=cx+Math.sin(a)*R,py=cy-Math.cos(a)*R;x.strokeStyle='#f2c35b';x.setLineDash([5,5]);x.beginPath();x.moveTo(cx,cy);x.lineTo(px,py);x.stroke();x.setLineDash([]);
+      x.fillStyle='#c9cde0';x.beginPath();x.arc(px,py,12,0,7);x.fill();x.stroke()};
+    const riseSetBlock=y0=>{if(!rs)return 0;
+      if(!DRY){x.strokeStyle='#3a466e';x.lineWidth=2;x.beginPath();x.moveTo(PAD,y0);x.lineTo(1080-PAD,y0);x.stroke()}
+      const col=(j,l,cx0)=>{if(DRY)return;x.textAlign='left';x.fillStyle=MU;x.font='600 25px '+SANS;try{x.letterSpacing='3px'}catch(e){}x.fillText(l.toUpperCase(),cx0,y0+52);try{x.letterSpacing='0px'}catch(e){}
+        x.fillStyle=CR;x.font='600 62px Georgia, serif';x.fillText(j===null?'none':tm(j),cx0,y0+122);
+        if(j!==null){const az=azAt(j,LOC.lat,LOC.lon);para([{t:dirTxt(az)+' · '+Math.round(info(j).ill*100)+'%'}],cx0,y0+168,29,38,300,MU);compass(cx0+385,y0+92,56,az);const cl=cloudAt(j);if(cl!==null){x.fillStyle='#8fb4ea';x.font=fnt(0,27);x.fillText(cl+'% clouds, '+cloudWord(cl),cx0,y0+250)}}};
+      const first=rs.rise!==null&&rs.set!==null&&rs.set<rs.rise;if(first){col(rs.set,'moonset',PAD);col(rs.rise,'moonrise',560)}else{col(rs.rise,'moonrise',PAD);col(rs.set,'moonset',560)}
+      return 285};
+    const content=(tier,y0)=>{let yy=y0;
+      let h=0;
+      if(!DRY){x.fillStyle=CR;x.textAlign='left'}
+      const hl=(()=>{x.font='700 58px Georgia, serif';const ws=hd.split(' '),ln=[];let cur='';ws.forEach(wd=>{const t2=cur?cur+' '+wd:wd;if(cur&&x.measureText(t2).width>TW){ln.push(cur);cur=wd}else cur=t2});ln.push(cur);return ln})();
+      hl.forEach((l,k)=>{if(!DRY){x.font='700 58px Georgia, serif';x.fillStyle=CR;x.textAlign='left';x.fillText(l,PAD,yy+50+k*68)}});yy+=hl.length*68+14;
+      const P=(segs,fs=33,lh=46)=>{yy+=para(segs,PAD,yy+34,fs,lh,TW,TX)+16};
+      P(sum);
+      if(eclP)P(tier>=3?[eclP[0]]:tier===2?[eclP[0],{t:' '+sents(eclP[1].t.trim())[0]}]:eclP);
+      pch.forEach(s2=>P(s2));
+      (tier>=4?spP.slice(0,1):spP).forEach(s2=>P(tier>=3?[{t:s2.t,b:1}]:tier===2?[{t:s2.t,b:1},{t:' '+sents(s2.x)[0]}]:[{t:s2.t,b:1},{t:' '+s2.x}]));
+      yy+=10;yy+=riseSetBlock(yy);
+      if(ghP.length&&tier<4){const gs=ghP.map(t=>{const a=sents(t);return tier===1?t:a.slice(0,tier===2?2:1).join(' ')});
+        const segs=[{t:'Golden hour.',b:1},{t:' '+gs[0]}],ln=wrap(segs,31,TW-56),bh=ln.length*44+44;
+        if(!DRY){x.fillStyle='#2a3250';x.strokeStyle='#3a466e';x.lineWidth=2;x.beginPath();x.roundRect(PAD,yy,TW,bh,26);x.fill();x.stroke();para(segs,PAD+28,yy+52,31,44,TW-56,TX)}
+        yy+=bh+10}
+      return yy};
+    let tier=1,H;for(;tier<=4;tier++){H=content(tier,0);if(1920-100-56-40-H>=740||tier===4)break}
+    const D=Math.round(Math.max(520,Math.min(940,1920-100-56-40-H))),MX=Math.round((1080-D)/2),MY=56,S=D/640;
+    x.save();x.translate(MX,MY);x.scale(S,S);x.fillStyle='#2a3453';x.beginPath();x.arc(320,320,319,0,7);x.fill();
     x.save();x.beginPath();x.arc(320,320,319,0,7);x.clip();x.translate(320,320);x.rotate(q);x.translate(-320,-320);x.globalAlpha=.2;x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();
     x.save();x.translate(320,320);x.rotate(mr);x.translate(-320,-320);x.clip(mpath);x.translate(320,320);x.rotate(q-mr);x.translate(-320,-320);x.drawImage(MI,0,0,560,560,1,1,638,638);x.restore();x.restore();
-    if(ex){try{const s0=ex.kind==='total'?1:ex.kind==='partial'?Math.min(.85,.35+ex.um*.5):.18,id=x.getImageData(120,120,840,840),D=id.data,rr=418*418;
-      for(let py=0;py<840;py++)for(let px=0;px<840;px++){const dx=px-420,dy=py-420;if(dx*dx+dy*dy>rr)continue;const k=(py*840+px)*4,L=.299*D[k]+.587*D[k+1]+.114*D[k+2];
-        D[k]=D[k]*(1-s0)+L*.74*s0;D[k+1]=D[k+1]*(1-s0)+L*.36*s0;D[k+2]=D[k+2]*(1-s0)+L*.22*s0}
-      x.putImageData(id,120,120)}catch(e2){}}
-    x.translate(0,90);
-    const fit=(t,w)=>{while(t.length>3&&x.measureText(t).width>w)t=t.slice(0,-2).trimEnd();return t},CR='#f1ead0',MU='#aab4d0';
-    x.textAlign='center';x.fillStyle=CR;x.font='600 84px Georgia, serif';x.fillText(fit(i.name,960),540,980);
-    x.fillStyle=MU;x.font='40px Georgia, serif';x.fillText(new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'}),540,1044);
-    const stat=(v,l,cx)=>{x.fillStyle=CR;x.font='600 58px Georgia, serif';x.fillText(v,cx,1146);x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText(l,cx,1190)};
-    stat(Math.round(i.ill*100)+'%','illuminated',200);stat(i.age.toFixed(1),'days old',540);stat((Math.round(moonPos(dj).km*0.621371/1000)*1000).toLocaleString(),'miles away',880);
-    let yy=1262;
-    if(LOC){
-      const r=riseSet(y,m-1,d,LOC.lat,LOC.lon);
-      x.strokeStyle='#3a466e';x.lineWidth=2;x.beginPath();x.moveTo(90,yy);x.lineTo(990,yy);x.stroke();
-      const col=(j,l,cx)=>{x.fillStyle=CR;x.font='600 58px Georgia, serif';x.fillText(j===null?'none':fmt(j,{hour:'numeric',minute:'2-digit'}),cx,yy+86);x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText(l,cx,yy+130);
-        if(j!==null){x.fillText(dirTxt(azAt(j,LOC.lat,LOC.lon))+' · '+Math.round(info(j).ill*100)+'%',cx,yy+172);const cl=cloudAt(j);if(cl!==null){x.fillStyle='#8fb4ea';x.fillText(cl+'% clouds, '+cloudWord(cl),cx,yy+214)}}};
-      if(r.rise!==null&&r.set!==null&&r.set<r.rise){col(r.set,'moonset',320);col(r.rise,'moonrise',760)}else{col(r.rise,'moonrise',320);col(r.set,'moonset',760)};yy+=250;
-    }
-    const lines=[];es.forEach(e=>lines.push(lab(e)+' at '+fmt(e.jd,{hour:'numeric',minute:'2-digit'})));
-    const nw=t=>t.toLowerCase().replace(/[^a-z ]/g,' ').split(/\s+/).filter(Boolean);sp.filter(s2=>!(ex&&/lunar eclipse/i.test(s2.t))).forEach(s2=>{const w=nw(s2.t),all=nw(lines.join(' '));if(!w.every(q=>all.includes(q)))lines.push(s2.t)});
-    if(LOC){const gh=goldenNotes(y,m-1,d).find(o=>o.strong);if(gh)lines.push('Golden hour moonrise or moonset')}
-    if(ex){const tt=j=>fmt(j,{hour:'numeric',minute:'2-digit'});lines.unshift(ex.kind==='total'?'Total lunar eclipse, totality '+tt(ex.e.tot[0])+' to '+tt(ex.e.tot[1]):ex.kind==='partial'?'Partial lunar eclipse, deepest at '+tt(ex.e.t):'Penumbral lunar eclipse at '+tt(ex.e.t))}
-    if(lines.length){x.strokeStyle='#3a466e';x.beginPath();x.moveTo(90,yy+20);x.lineTo(990,yy+20);x.stroke();x.fillStyle=CR;x.font='600 38px Georgia, serif';
-      lines.slice(0,3).forEach((t,k)=>x.fillText(fit(t,940),540,yy+78+k*56));
-      if(lines.length>3){x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('+ '+(lines.length-3)+' more',540,yy+78+3*56)}}
-    x.setTransform(1,0,0,1,0,0);x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('Lunar Moon Calendar  ·  @ed_p_photos',540,1870);
+    if(ex){try{const s0=ex.kind==='total'?1:ex.kind==='partial'?Math.min(.85,.35+ex.um*.5):.18,id=x.getImageData(MX,MY,D,D),D2=id.data,rr2=(D/2-2)*(D/2-2);
+      for(let py=0;py<D;py++)for(let px=0;px<D;px++){const dx=px-D/2,dy=py-D/2;if(dx*dx+dy*dy>rr2)continue;const k=(py*D+px)*4,L=.299*D2[k]+.587*D2[k+1]+.114*D2[k+2];
+        D2[k]=D2[k]*(1-s0)+L*.74*s0;D2[k+1]=D2[k+1]*(1-s0)+L*.36*s0;D2[k+2]=D2[k+2]*(1-s0)+L*.22*s0}
+      x.putImageData(id,MX,MY)}catch(e2){}}
+    DRY=false;content(tier,MY+D+40);
+    x.textAlign='center';x.fillStyle=MU;x.font='30px Georgia, serif';x.fillText('Lunar Moon Calendar  ·  @ed_p_photos',540,1884);
     const blob=await new Promise(r=>c.toBlob(r,'image/png'));file=new File([blob],'moon-'+SEL+'.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text});say('Shared.');return}
   }catch(err){if(err&&err.name==='AbortError'){say('');return}}
