@@ -141,6 +141,16 @@ body{font-size:17px}
 @media (max-width:375px){.tabs button{font-size:.8rem}}
 .hero>.mn{width:min(80vw,320px);height:auto}
 .day .bd.ecl{color:#ff9a6b}.ecln{margin:10px 0;padding:10px 12px;border-radius:12px;background:rgba(255,120,60,.1);border:1px solid rgba(255,140,90,.35);color:#f4e3da;font-size:.92rem;line-height:1.45;text-align:left}.ecln b{color:#ffb894}
+/*WGT-CSS*/
+.wgt{border-top:1px solid var(--line);padding-top:6px}
+.wbar{display:flex;width:100%;justify-content:space-between;align-items:center;gap:8px;min-height:44px;background:none;border:0;color:var(--fg);font:inherit;font-size:1rem;font-weight:600;text-align:left;cursor:pointer;padding:0}
+.wchev{transition:transform .2s;color:var(--acc)}.wbar[aria-expanded="true"] .wchev{transform:rotate(180deg)}
+.wsteps{margin:4px 0 4px 1.2em;padding:0}.wsteps li{margin:3px 0}
+.wact{display:flex;align-items:center;gap:12px;margin:10px 0}
+.wbtn{font:inherit;font-weight:600;background:var(--gold);color:#1a1500;border:0;border-radius:999px;min-height:44px;padding:8px 18px;cursor:pointer}
+#wmsg{color:var(--gold);font-size:.9rem}
+#wpre{max-height:280px;overflow:auto;margin:0;padding:10px;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:10px;color:#dfe6ff;font:12px/1.4 ui-monospace,Menlo,monospace;white-space:pre;-webkit-overflow-scrolling:touch}
+/*/WGT-CSS*/
 </style>
 </head>
 <body>
@@ -153,6 +163,15 @@ body{font-size:17px}
 <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-t="cal">Calendar</button><button role="tab" aria-selected="false" data-t="pg">Phase Guide</button><button role="tab" aria-selected="false" data-t="fx">Moon Facts</button><button role="tab" aria-selected="false" data-t="ev">Sky Events</button></div>
 <div id="view"></div>
 <p class="note">Times are shown in your local time zone. Phase times for October to December 2026 match published almanacs; other months are calculated and are typically accurate to within an hour or so. Illumination and age are calculated for local noon on each day, and for right now on today's date. Moonrise and moonset are calculated for the coordinates you enter, shown in your device’s time zone; your location stays in this browser. The horizon setting raises the horizon to match trees, hills or buildings in the direction the Moon rises, so moonrise comes a little later and moonset a little earlier. A supermoon here means a full moon closer than about 227,000 miles.</p>
+<!--WGT-SEC-->
+<section class="note wgt" aria-label="iPhone widget"><button type="button" id="wtog" class="wbar" aria-expanded="false" aria-controls="wbody"><span>iPhone widget (Scriptable)</span><span class="wchev" aria-hidden="true">&#9662;</span></button>
+<div id="wbody" hidden>
+<ol class="wsteps"><li>Install the free <b>Scriptable</b> app from the App Store.</li><li>Tap <b>Copy widget code</b> below.</li><li>In Scriptable tap <b>+</b>, paste, and name it <b>Lunar</b>. Tap the play button once and allow location.</li><li>Add a Scriptable widget to your lock screen or home screen and choose the script <b>Lunar</b>.</li></ol>
+<p style="margin:6px 0">After a moon-math update here, copy and paste again to refresh the widget.</p>
+<div class="wact"><button type="button" id="wcopy" class="wbtn">Copy widget code</button><span id="wmsg" role="status" aria-live="polite"></span></div>
+<pre id="wpre" tabindex="0" aria-label="Widget code"></pre>
+</div></section>
+<!--/WGT-SEC-->
 <section class="note" aria-labelledby="t-hs"><h2 id="t-hs" style="font-size:1rem;margin:0 0 4px;color:var(--fg)">Save to your home screen</h2><p style="margin:4px 0"><strong>iPhone:</strong> open this page in Safari, tap the Share button (square with an arrow), then <em>Add to Home Screen</em>.</p><p style="margin:4px 0"><strong>Android:</strong> open this page in Chrome, tap the &#8942; menu, then <em>Add to Home screen</em>.</p></section>
 <p class="note">Tip: if anything looks out of date or off, tap <b>Today</b> to reload the app with the latest times, weather and features.</p>
 <p class="note">Cloud cover forecasts for the next two weeks come from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>. Your coordinates are sent to them when you set a location, and also once to <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a> to look up the name of the nearest town. Nothing else is sent.</p>
@@ -1183,6 +1202,302 @@ document.addEventListener('click',e=>{const rg=e.target.closest('[data-r]');if(r
 document.addEventListener('change',e=>{if(e.target.id==='yr'){EVY=+e.target.value;evTab(true)}});
 renderLoc();hero();show();
 </script>
+<!--WGT-DATA-->
+<script type="text/plain" id="wsrc">
+// Lunar Moon Calendar: lock screen and home screen widget for Scriptable (iPhone)
+//
+// SET UP (about 2 minutes)
+// 1. Install the free "Scriptable" app from the App Store.
+// 2. In Scriptable tap +, paste this whole script, and name it "Lunar".
+// 3. Put your place in the two numbers just below (or leave them and let the widget use your phone's location).
+// 4. Lock screen: press and hold the lock screen, tap Customize, tap the area under the clock (or above it for the one-line version),
+//    tap Add Widget, choose Scriptable, pick a style, then tap the widget and choose Script = Lunar.
+//    Home screen: press and hold, tap +, choose Scriptable, then pick a size and choose Script = Lunar.
+//
+// To use a different place for one widget, type it in the widget's "Parameter" box as latitude,longitude, for example 34.05,-118.24
+
+const MY_LAT = 40.71;     // <- your latitude  (south is negative)
+const MY_LON = -74.00;    // <- your longitude (west is negative)
+const SHOW_LOCK_BOX = false;      // lock screen: true puts the grey box behind the widget, false lets it blend into your wallpaper
+const USE_PHONE_LOCATION = true;  // set to false to always use the two numbers above
+
+let HZ = 0;
+let LOC = null;
+const noonJD = (y, m, d) => toJD(new Date(y, m, d, 12));
+
+/*CORE*/
+const SYN=29.530588861,E0=2451550.09766,RAD=Math.PI/180;
+const V0=[[2026,9,10,15,50,0],[2026,9,26,4,12,2],[2026,10,1,20,28,3],[2026,10,9,7,2,0],[2026,10,17,11,47,1],[2026,10,24,14,53,2,1],[2026,11,1,6,8,3],[2026,11,9,0,52,0],[2026,11,17,5,42,1],[2026,11,24,1,28,2,1]];
+const VJ=V0.map(a=>({jd:Date.UTC(a[0],a[1],a[2],a[3],a[4])/864e5+2440587.5,q:a[5],s:!!a[6]}));
+const toDate=jd=>new Date((jd-2440587.5)*864e5), toJD=d=>d.getTime()/864e5+2440587.5;
+function ev(n,q){
+  const k=n+q/4, M=(2.5534+29.1053567*k)*RAD, Mp=(201.5643+385.81693528*k)*RAD;
+  let jd=E0+SYN*k;
+  if(q===0) jd+=-0.4072*Math.sin(Mp)+0.17241*Math.sin(M);
+  else if(q===2) jd+=-0.40614*Math.sin(Mp)+0.17302*Math.sin(M);
+  else{const W=0.00306-0.00038*Math.cos(M)+0.00026*Math.cos(Mp);jd+=-0.62801*Math.sin(Mp)+0.17172*Math.sin(M)+(q===1?W:-W)}
+  const o=VJ.find(v=>v.q===q&&Math.abs(v.jd-jd)<2);
+  return o?o.jd:jd;
+}
+function moonPos(jd){
+  const d=jd-2451543.5,S=x=>Math.sin(x*RAD),C=x=>Math.cos(x*RAD);
+  const N=125.1228-0.0529538083*d,w=318.0634+0.1643573223*d,e=0.0549,Mm=115.3654+13.0649929509*d;
+  const Ms=356.047+0.9856002585*d,ws=282.9404+4.70935e-5*d,Lm=Mm+w+N,D=Lm-(Ms+ws),F=Lm-N;
+  let E=Mm+e/RAD*S(Mm)*(1+e*C(Mm));
+  for(let i=0;i<4;i++)E=E-(E-e/RAD*S(E)-Mm)/(1-e*C(E));
+  const xv=60.2666*(C(E)-e),yv=60.2666*Math.sqrt(1-e*e)*S(E),v=Math.atan2(yv,xv)/RAD;
+  let r=Math.hypot(xv,yv);
+  const vw=v+w,xh=r*(C(N)*C(vw)-S(N)*S(vw)*C(5.1454)),yh=r*(S(N)*C(vw)+C(N)*S(vw)*C(5.1454)),zh=r*S(vw)*S(5.1454);
+  let lon=Math.atan2(yh,xh)/RAD,lat=Math.atan2(zh,Math.hypot(xh,yh))/RAD;
+  lon+=-1.274*S(Mm-2*D)+0.658*S(2*D)-0.186*S(Ms)-0.059*S(2*Mm-2*D)-0.057*S(Mm-2*D+Ms)+0.053*S(Mm+2*D)+0.046*S(2*D-Ms)+0.041*S(Mm-Ms)-0.035*S(D)-0.031*S(Mm+Ms)-0.015*S(2*F-2*D)+0.011*S(Mm-4*D);
+  lat+=-0.173*S(F-2*D)-0.055*S(Mm-F-2*D)-0.046*S(Mm+F-2*D)+0.033*S(F+2*D)+0.017*S(2*Mm+F);
+  r+=-0.58*C(Mm-2*D)-0.46*C(2*D);
+  const ecl=23.4393-3.563e-7*d,x=C(lon)*C(lat),y=S(lon)*C(lat),z=S(lat);
+  const ye=y*C(ecl)-z*S(ecl),ze=y*S(ecl)+z*C(ecl);
+  return{ra:Math.atan2(ye,x)/RAD,dec:Math.atan2(ze,Math.hypot(x,ye))/RAD,km:r*6378.14};
+}
+const SUPER_KM=365000,isSuper=jd=>moonPos(jd).km<SUPER_KM;
+function altAt(jd,lat,lon){
+  const p=moonPos(jd),H=(280.46061837+360.98564736629*(jd-2451545)+lon-p.ra)*RAD,la=lat*RAD,de=p.dec*RAD;
+  return Math.asin(Math.sin(la)*Math.sin(de)+Math.cos(la)*Math.cos(de)*Math.cos(H))/RAD-(0.7275*Math.asin(6378.14/p.km)/RAD-0.5667)-HZ;
+}
+function azAt(jd,lat,lon){
+  const p=moonPos(jd),H=(280.46061837+360.98564736629*(jd-2451545)+lon-p.ra)*RAD,la=lat*RAD,de=p.dec*RAD;
+  return ((Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(la)-Math.tan(de)*Math.cos(la))/RAD+180)%360+360)%360;
+}
+const DIRS=['north','northeast','east','southeast','south','southwest','west','northwest'];
+const dirTxt=a=>DIRS[Math.round(a/45)%8]+' ('+Math.round(a)+'°)';
+function riseSet(y,m,d,lat,lon){
+  const t0=toJD(new Date(y,m,d)),t1=toJD(new Date(y,m,d+1)),st=1/96;let rise=null,set=null,a=altAt(t0,lat,lon);
+  for(let t=t0,q=0;t<t1-1e-5;q++,t=t0+q*st){const b=altAt(t+st,lat,lon);
+    if((a<0)!==(b<0)){let lo=t,hi=t+st;for(let i=0;i<20;i++){const mid=(lo+hi)/2;((altAt(mid,lat,lon)<0)===(a<0))?lo=mid:hi=mid}
+      const z=(lo+hi)/2;if(b>=0&&a<0){if(rise===null)rise=z}else if(set===null)set=z}
+    a=b}
+  return{rise,set};
+}
+function sunAlt(jd,lat,lon){
+  const n=jd-2451545,L=280.46+0.9856474*n,g=(357.528+0.9856003*n)*RAD,l=(L+1.915*Math.sin(g)+0.02*Math.sin(2*g))*RAD,e=(23.439-4e-7*n)*RAD,ra=Math.atan2(Math.cos(e)*Math.sin(l),Math.cos(l)),de=Math.asin(Math.sin(e)*Math.sin(l)),H=(280.46061837+360.98564736629*n+lon)*RAD-ra,la=lat*RAD;
+  return Math.asin(Math.sin(la)*Math.sin(de)+Math.cos(la)*Math.cos(de)*Math.cos(H))/RAD+0.833;
+}
+function sunEq(jd){const n=jd-2451545,L=280.46+0.9856474*n,g=(357.528+0.9856003*n)*RAD,l=(L+1.915*Math.sin(g)+0.02*Math.sin(2*g))*RAD,e=(23.439-4e-7*n)*RAD;return{ra:Math.atan2(Math.cos(e)*Math.sin(l),Math.cos(l))/RAD,dec:Math.asin(Math.sin(e)*Math.sin(l))/RAD}}
+/* How the Moon looks on a given night: the best viewing moment (highest in a dark sky), the tilt of the disc (parallactic angle q) and the direction of the lit side (chi), both in degrees counterclockwise from straight up. */
+function moonLook(jd0,lat,lon){
+  let best=null,bs=-1e9;
+  for(let t=jd0;t<=jd0+1;t+=1/144){const a=altAt(t,lat,lon),sa=sunAlt(t,lat,lon),sc=(a>0?1000:0)+(sa<-6?500:sa<0?250:0)+a;if(sc>bs){bs=sc;best=t}}
+  const p=moonPos(best),su=sunEq(best),H=(280.46061837+360.98564736629*(best-2451545)+lon-p.ra)*RAD,la=lat*RAD,de=p.dec*RAD,ds=su.dec*RAD,da=(su.ra-p.ra)*RAD;
+  const q=Math.atan2(Math.sin(H),Math.tan(la)*Math.cos(de)-Math.sin(de)*Math.cos(H))/RAD;
+  const chi=Math.atan2(Math.cos(ds)*Math.sin(da),Math.sin(ds)*Math.cos(de)-Math.cos(ds)*Math.sin(de)*Math.cos(da))/RAD;
+  return{t:best,q,chi,alt:altAt(best,lat,lon)};
+}
+function sunRS(y,m,d,lat,lon){
+  const t0=toJD(new Date(y,m,d)),t1=toJD(new Date(y,m,d+1)),st=1/96;let rise=null,set=null,a=sunAlt(t0,lat,lon);
+  for(let t=t0,q=0;t<t1-1e-5;q++,t=t0+q*st){const b=sunAlt(t+st,lat,lon);
+    if((a<0)!==(b<0)){let lo=t,hi=t+st;for(let i=0;i<20;i++){const mid=(lo+hi)/2;((sunAlt(mid,lat,lon)<0)===(a<0))?lo=mid:hi=mid}
+      const z=(lo+hi)/2;if(b>=0&&a<0){if(rise===null)rise=z}else if(set===null)set=z}
+    a=b}
+  return{rise,set};
+}
+function goldenNotes(y,m,d){
+  if(!LOC)return[];
+  const r=riseSet(y,m,d,LOC.lat,LOC.lon),s=sunRS(y,m,d,LOC.lat,LOC.lon),out=[],ill=Math.round(info(noonJD(y,m,d)).ill*100);
+  const chk=(mj,sj,mw,sw)=>{if(mj===null||sj===null||ill<8)return;const dm=Math.round((mj-sj)*1440);if(Math.abs(dm)>60)return;
+    const t=fmt(mj,{hour:'numeric',minute:'2-digit'}),az=dirTxt(azAt(mj,LOC.lat,LOC.lon));
+    out.push({strong:mw==='rise'&&sw==='sunset'||mw==='set'&&sw==='sunrise',t:`Moon${mw} is at ${t}, ${Math.abs(dm)<=1?'right at':Math.abs(dm)+' minutes '+(dm>0?'after':'before')} ${sw}, in the ${az}. The Moon is about ${ill}% lit. ${mw==='rise'&&sw==='sunset'||mw==='set'&&sw==='sunrise'?'The sky is glowing and the Moon is bright, which is a great time for a Moon-over-landmark shot.':ill<25?'The Moon is a thin crescent, so it will be faint against the bright sky.':'The Moon will be low against the bright sky.'}`})};
+  chk(r.rise,s.set,'rise','sunset');chk(r.set,s.rise,'set','sunrise');chk(r.rise,s.rise,'rise','sunrise');chk(r.set,s.set,'set','sunset');
+  return out;
+}
+function info(jd){
+  let n=Math.floor((jd-E0)/SYN);
+  while(ev(n+1,0)<=jd)n++; while(ev(n,0)>jd)n--;
+  const a=ev(n,0),age=jd-a;
+  /* Phase fraction runs evenly between the verified quarter times (new, first quarter, full, last quarter, new), so the percent lit peaks at the real full Moon */
+  const Q=[a,ev(n,1),ev(n,2),ev(n,3),ev(n+1,0)];let qi=3;for(let i=0;i<4;i++)if(jd<Q[i+1]){qi=i;break}
+  const p=(qi+(jd-Q[qi])/(Q[qi+1]-Q[qi]))*.25;
+  const names=[[.0339,'New Moon'],[.2161,'Waxing Crescent'],[.2839,'First Quarter'],[.4661,'Waxing Gibbous'],[.5339,'Full Moon'],[.7161,'Waning Gibbous'],[.7839,'Last Quarter'],[.9661,'Waning Crescent'],[2,'New Moon']];
+  return{p,age,ill:(1-Math.cos(2*Math.PI*p))/2,name:names.find(x=>p<x[0])[1]};
+}
+function events(j0,j1){
+  const out=[], n0=Math.floor((j0-E0)/SYN)-1, n1=Math.ceil((j1-E0)/SYN)+1;
+  for(let n=n0;n<=n1;n++)for(let q=0;q<4;q++){const jd=ev(n,q);if(jd>=j0&&jd<j1)out.push({jd,q,sup:q===2&&isSuper(jd)})}
+  return out.sort((a,b)=>a.jd-b.jd);
+}
+/*ENDCORE*/
+
+const ECG={F:1.02};
+function eclSep(jd){
+  const R=Math.PI/180,m=moonPos(jd),s=sunEq(jd),b=m.dec*R,a=m.ra*R,d=-s.dec*R,c=(s.ra+180)*R;
+  return Math.acos(Math.min(1,Math.sin(b)*Math.sin(d)+Math.cos(b)*Math.cos(d)*Math.cos(a-c)))/R;
+}
+function eclRad(jd){
+  const R=Math.PI/180,km=moonPos(jd).km,pm=Math.asin(6378.14/km)/R,sm=0.2725076*pm;
+  const n=jd-2451545,ss=0.2666*(1+0.0167*Math.cos((n-2.5)*2*Math.PI/365.2422)),ps=0.00244;
+  return {sm,ru:ECG.F*(pm+ps-ss),rp:ECG.F*(pm+ps+ss)};
+}
+function eclFind(){
+  const out=[],T0=toJD(new Date(2026,0,1))-3,T1=toJD(new Date(2051,0,1));
+  let k=Math.floor((T0-2451564.7)/29.530588853);
+  for(;;k++){
+    const c=2451564.7+k*29.530588853;if(c>T1)break;if(c<T0)continue;
+    let lo=c-1.0,hi=c+1.0;
+    for(let i=0;i<40;i++){const a=lo+(hi-lo)/3,b=hi-(hi-lo)/3;eclSep(a)<eclSep(b)?hi=b:lo=a}
+    const tm=(lo+hi)/2,sp=eclSep(tm),r=eclRad(tm);
+    if(sp>r.rp+r.sm)continue;
+    const cross=lim=>{const f=(t)=>eclSep(t)-lim;let a=tm-0.2,b=tm;for(let i=0;i<40;i++){const m=(a+b)/2;f(m)>0?a=m:b=m}let a2=tm,b2=tm+0.2;for(let i=0;i<40;i++){const m=(a2+b2)/2;f(m)>0?b2=m:a2=m}return [(a+b)/2,(a2+b2)/2]};
+    const e={t:tm,sep:sp,um:(r.ru+r.sm-sp)/(2*r.sm),pm:(r.rp+r.sm-sp)/(2*r.sm)};
+    e.pen=cross(r.rp+r.sm);
+    if(sp<r.ru+r.sm){e.umb=cross(r.ru+r.sm);if(sp<r.ru-r.sm)e.tot=cross(r.ru-r.sm)}
+    e.kind=e.tot?'total':e.umb?'partial':'pen';
+    out.push(e);
+  }
+  return out;
+}
+
+let ECLS=null,ECLC=new Map(),ECLK='';
+function eclList(){if(!ECLS)ECLS=eclFind().filter(e=>e.kind!=='pen'||e.pm>=0.8);return ECLS}
+/* Is a lunar eclipse visible from the saved location during this local calendar day? */
+function eclDay(y,m0,d){
+  if(!LOC)return null;
+  const sig=LOC.lat+','+LOC.lon+','+HZ;if(sig!==ECLK){ECLK=sig;ECLC.clear()}
+  const ck=y+'-'+m0+'-'+d;if(ECLC.has(ck))return ECLC.get(ck);
+  const a=toJD(new Date(y,m0,d)),b=toJD(new Date(y,m0,d+1));let out=null;
+  for(const e of eclList()){
+    const w=e.umb||e.pen;if(w[1]<a||w[0]>b)continue;
+    const lo=Math.max(a,w[0]),hi=Math.min(b,w[1]);let f=null,l=null;
+    for(let t=lo;t<=hi;t+=1/288){if(altAt(t,LOC.lat,LOC.lon)>0){if(f===null)f=t;l=t}}
+    if(f===null)continue;
+    out={kind:e.kind,um:e.um,e,vis:[f,l],all:altAt(w[0],LOC.lat,LOC.lon)>0&&altAt(w[1],LOC.lat,LOC.lon)>0};break;
+  }
+  ECLC.set(ck,out);return out;
+}
+
+async function getPlace() {
+  const fm = FileManager.local();
+  const file = fm.joinPath(fm.documentsDirectory(), "lunar-widget-location.json");
+  const p = (args.widgetParameter || "").split(",").map(Number);
+  if (p.length === 2 && isFinite(p[0]) && isFinite(p[1])) return { lat: p[0], lon: p[1] };
+  if (USE_PHONE_LOCATION) {
+    try {
+      Location.setAccuracyToThreeKilometers();
+      const l = await Location.current();
+      const v = { lat: l.latitude, lon: l.longitude };
+      fm.writeString(file, JSON.stringify(v));
+      return v;
+    } catch (e) {
+      try { if (fm.fileExists(file)) return JSON.parse(fm.readString(file)); } catch (e2) {}
+    }
+  }
+  return { lat: MY_LAT, lon: MY_LON };
+}
+
+const timeTxt = jd => toDate(jd + 30 / 86400).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+const isToday = jd => toDate(jd).toDateString() === new Date().toDateString();
+
+function lookAngle(lat, lon) {
+  // Same as the app: how the Moon looks at the best viewing moment of today (highest in a dark sky)
+  const d = new Date(), l = moonLook(toJD(new Date(d.getFullYear(), d.getMonth(), d.getDate())), lat, lon);
+  return l.chi - l.q;
+}
+
+function moonIcon(size, k, theta, lit, dark) {
+  const c = new DrawContext();
+  c.size = new Size(size, size); c.opaque = false; c.respectScreenScale = true;
+  const r = size / 2 - 2, cx = size / 2, cy = size / 2;
+  c.setFillColor(dark); c.fillEllipse(new Rect(cx - r, cy - r, 2 * r, 2 * r));
+  const beta = (theta - 270) * Math.PI / 180, cb = Math.cos(beta), sb = Math.sin(beta), cc = 1 - 2 * k, N = 90;
+  const pt = (x, y) => new Point(cx + x * cb + y * sb, cy - x * sb + y * cb);
+  const path = new Path();
+  for (let i = 0; i <= N; i++) { const f = Math.PI * i / N, x = r * Math.sin(f), y = -r * Math.cos(f); if (i === 0) path.move(pt(x, y)); else path.addLine(pt(x, y)); }
+  for (let i = N; i >= 0; i--) { const f = Math.PI * i / N; path.addLine(pt(cc * r * Math.sin(f), -r * Math.cos(f))); }
+  path.closeSubpath();
+  c.setFillColor(lit); c.addPath(path); c.fillPath();
+  return c.getImage();
+}
+
+const place = await getPlace();
+LOC = { lat: place.lat, lon: place.lon };
+const now = new Date(), nowJD = toJD(now), inf = info(nowJD);
+const pct = Math.round(inf.ill * 100);
+const t0 = riseSet(now.getFullYear(), now.getMonth(), now.getDate(), place.lat, place.lon);
+const t1 = riseSet(now.getFullYear(), now.getMonth(), now.getDate() + 1, place.lat, place.lon);
+const pick = (a, b) => [a, b].find(j => j !== null && j > nowJD) ?? null;
+const nextRise = pick(t0.rise, t1.rise), nextSet = pick(t0.set, t1.set);
+const when = j => j === null ? "none" : timeTxt(j) + (isToday(j) ? "" : " tmrw");
+const theta = lookAngle(place.lat, place.lon);
+
+// Eclipse tint: same rule as the app (an eclipse visible from your place on this local day)
+const ex = eclDay(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+const exS = ex ? (ex.kind === "total" ? 1 : ex.kind === "partial" ? Math.min(0.85, 0.35 + ex.um * 0.5) : 0.18) : 0;
+const exName = ex ? (ex.kind === "total" ? "Total lunar eclipse" : ex.kind === "partial" ? "Partial lunar eclipse" : "Penumbral eclipse") : null;
+function tint(hex, lumScale) {
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255], red = [190, 78, 40], k = exS * 0.9;
+  const o = c.map((v, i) => Math.round((v * (1 - k) + red[i] * k) * (1 - 0.3 * exS * lumScale)));
+  return "#" + o.map(v => v.toString(16).padStart(2, "0")).join("");
+}
+const nameTxt = exName || inf.name;
+// List whichever happens first, first
+const evs = [["Rise", nextRise], ["Set", nextSet]].sort((a, b) => (a[1] === null) - (b[1] === null) || a[1] - b[1]);
+const fam = config.widgetFamily || "systemSmall";
+
+const w = new ListWidget();
+w.refreshAfterDate = new Date(Date.now() + 20 * 60 * 1000);
+
+if (fam === "accessoryInline") {
+  w.addText(ex ? `${exName} ${pct}%` : `${inf.name} ${pct}%`);
+} else if (fam === "accessoryCircular") {
+  w.addAccessoryWidgetBackground = SHOW_LOCK_BOX;
+  const st = w.addStack(); st.layoutVertically(); st.centerAlignContent();
+  const im = st.addImage(moonIcon(120, inf.ill, theta, new Color("#ffffff"), new Color("#ffffff", 0.28)));
+  im.imageSize = new Size(32, 32); im.centerAlignImage();
+  const t = st.addText(pct + "%"); t.font = Font.boldSystemFont(15); t.centerAlignText();
+} else if (fam === "accessoryRectangular") {
+  w.addAccessoryWidgetBackground = SHOW_LOCK_BOX;
+  const h = w.addStack(); h.centerAlignContent();
+  const im = h.addImage(moonIcon(100, inf.ill, theta, new Color("#ffffff"), new Color("#ffffff", 0.28))); im.imageSize = new Size(32, 32);
+  h.addSpacer(6);
+  const col = h.addStack(); col.layoutVertically();
+  const line = (txt, size, bold) => { const t = col.addText(txt); t.font = bold ? Font.boldSystemFont(size) : Font.mediumSystemFont(size); t.minimumScaleFactor = 0.5; t.lineLimit = 1; return t; };
+  line(nameTxt, 16, true);
+  line(`${evs[0][0]} ${when(evs[0][1])}`, 15, false);
+  line(`${evs[1][0]} ${when(evs[1][1])} · ${pct}%`, 15, false);
+} else {
+  const g = new LinearGradient(); g.colors = [new Color("#070b18"), new Color("#141d3d")]; g.locations = [0, 1]; w.backgroundGradient = g;
+  const medium = fam === "systemMedium" || fam === "systemLarge";
+  const txt = (stack, s, size, color, weight) => { const t = stack.addText(s); t.textColor = new Color(color); t.font = weight === "semi" ? Font.semiboldSystemFont(size) : weight === "med" ? Font.mediumSystemFont(size) : Font.systemFont(size); t.minimumScaleFactor = 0.7; t.lineLimit = 1; return t; };
+  const row = w.addStack(); row.centerAlignContent();
+  const im = row.addImage(moonIcon(300, inf.ill, theta, new Color(tint("#f1ead0", 1)), new Color("#2a3453")));
+  im.imageSize = medium ? new Size(110, 110) : new Size(72, 72);
+  row.addSpacer(medium ? 14 : 10);
+  const col = row.addStack(); col.layoutVertically();
+  if (medium) {
+    txt(col, nameTxt, 30, "#f8f9ff", "semi");
+    txt(col, `${pct}% lit · ${inf.age.toFixed(1)} days`, 20, "#c0c8e2");
+  } else {
+    txt(col, `${pct}% lit`, 22, "#f8f9ff", "semi");
+    txt(col, `${inf.age.toFixed(1)} days`, 16, "#c0c8e2");
+  }
+  if (!medium) { w.addSpacer(4); txt(w, nameTxt, 21, "#f8f9ff", "semi"); }
+  w.addSpacer();
+  const sz = medium ? 24 : 17;
+  for (const [lab, j] of evs) txt(w, `${lab}  ${when(j)}`, sz, "#f8f9ff", "med");
+}
+
+if (config.runsInWidget) Script.setWidget(w);
+else if (fam === "accessoryInline" || fam.startsWith("accessory")) await w.presentSmall();
+else await w.presentMedium();
+Script.complete();
+</script>
+<!--/WGT-DATA-->
+<!--WGT-JS-->
+<script>(function(){
+var t=document.getElementById('wtog'),b=document.getElementById('wbody'),pre=document.getElementById('wpre'),cp=document.getElementById('wcopy'),msg=document.getElementById('wmsg'),code='';
+function load(){if(!code){var s=document.getElementById('wsrc');code=s?s.textContent.replace(/^\n/,''):''}return code}
+t.addEventListener('click',function(){var o=t.getAttribute('aria-expanded')!=='true';t.setAttribute('aria-expanded',o);b.hidden=!o;if(o&&!pre.textContent){pre.textContent=load()}});
+function say(m){msg.textContent=m;clearTimeout(say.t);say.t=setTimeout(function(){msg.textContent=''},3000)}
+function legacy(c){var a=document.createElement('textarea');a.value=c;a.setAttribute('readonly','');a.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(a);a.select();a.setSelectionRange(0,c.length);var ok=false;try{ok=document.execCommand('copy')}catch(e){}document.body.removeChild(a);return ok}
+cp.addEventListener('click',function(){var c=load();
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(c).then(function(){say('Copied')},function(){say(legacy(c)?'Copied':'Copy failed. Press and hold the code to select it.')})}
+  else say(legacy(c)?'Copied':'Copy failed. Press and hold the code to select it.')});
+})()</script>
 <button id="totop" class="tog" hidden aria-label="Back to top">&#8593; Top</button>
 <script>(function(){var b=document.getElementById("totop");function u(){var on=window.scrollY>500&&typeof TAB!=="undefined"&&(TAB==="ev"||TAB==="fx");b.hidden=!on}window.addEventListener("scroll",u,{passive:true});u()})()</script>
 </body>
