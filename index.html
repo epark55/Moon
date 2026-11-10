@@ -545,7 +545,7 @@ function rsHtml(y,m,d,live){
   if(!LOC)return '';
   const r=riseSet(y,m,d,LOC.lat,LOC.lon);let tr=false,ts=false;
   /* Top (live) cards only: moonrise rolls to tomorrow's about 4 hours after it happens, moonset right after it happens */
-  if(live){const nj=toJD(new Date()),n=riseSet(y,m,d+1,LOC.lat,LOC.lon);if(r.rise!==null&&nj>r.rise+4/24&&n.rise!==null){r.rise=n.rise;tr=true}if(r.set!==null&&nj>r.set&&n.set!==null){r.set=n.set;ts=true}}
+  if(live){const nj=toJD(new Date()),n=riseSet(y,m,d+1,LOC.lat,LOC.lon);if(r.rise!==null&&nj>r.rise+4/24&&n.rise!==null){r.rise=n.rise;tr=true}else if(r.rise===null&&n.rise!==null){r.rise=n.rise;tr=true}if(r.set!==null&&nj>r.set&&n.set!==null){r.set=n.set;ts=true}else if(r.set===null&&n.set!==null){r.set=n.set;ts=true}}
   const f=j=>j===null?'none':fmt(j,{hour:'numeric',minute:'2-digit'}),dr=(j,kind)=>{if(j===null){const n=nextRS(y,m,d,kind);return '<span>'+(n===null?'':'no '+(kind==='rise'?'moonrise':'moonset')+' this day, next is '+fmt(n,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+'</span></div>'}const c=cloudAt(j);const az=azAt(j,LOC.lat,LOC.lon);return '<span>'+dirTxt(az)+' · '+Math.round(info(j).ill*100)+'%</span>'+(c===null?'':'<span class="wx">'+c+'% clouds, '+cloudWord(c)+'</span>')+'</div>'+compass(az)};
   const gn=goldenNotes(y,m,d).map(o=>`<p class="gh-note"><b>Golden hour.</b> ${o.t}</p>`).join('');
   /* Show the two in the order they happen: on days when moonset comes first, moonset leads */
