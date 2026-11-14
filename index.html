@@ -519,6 +519,8 @@ const lab=e=>QN[e.q]+(e.q===2?' ('+moonName(e.jd)+')':'')+(e.sup?', supermoon':'
 const distTxt=jd=>{const km=moonPos(jd).km,p=Math.round(Math.abs(1-km/384400)*100);return `${(Math.round(km*0.621371/100)*100).toLocaleString()} miles away, ${p}% ${km<384400?'closer':'farther'} than average`};
 let LOC=null;try{LOC=JSON.parse(localStorage.getItem('lunar-loc'))}catch(e){}
 let HZ=0;try{HZ=parseFloat(localStorage.getItem('lunar-hz'))||0}catch(e){}
+/*LIVELOC*/(async()=>{try{if(!LOC||!LOC.live||!navigator.geolocation)return;let ok=!!window.__native;if(!ok&&navigator.permissions){ok=(await navigator.permissions.query({name:'geolocation'})).state==='granted'}if(!ok)return;
+navigator.geolocation.getCurrentPosition(p=>{const la=p.coords.latitude,lo=p.coords.longitude,dx=(la-LOC.lat)*111,dy=(lo-LOC.lon)*111*Math.cos(la*Math.PI/180);if(Math.hypot(dx,dy)>5)saveLoc(la,lo,true)},()=>{},{timeout:8000,maximumAge:600000})}catch(e){}})();/*/LIVELOC*/
 let PEND=null;
 const pc=s=>{const m=/^\s*(-?\d+(?:\.\d+)?)\s*°?\s*([NSEWnsew])?\s*$/.exec(s);if(!m)return null;let v=parseFloat(m[1]);if(m[2]&&/[swSW]/.test(m[2]))v=-Math.abs(v);return v};
 const tzOff=lon=>Math.abs(lon/15+new Date().getTimezoneOffset()/60);
@@ -561,7 +563,7 @@ async function nameLoc(lat,lon){
   try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&accept-language=en&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`);if(!r.ok)return;const j=await r.json(),a=j.address||{},pl=[a.city||a.town||a.village||a.hamlet||a.suburb||a.municipality||a.county,a.state||a.region,a.country].filter((x,i,q)=>x&&q.indexOf(x)===i);
     if(pl.length&&LOC&&LOC.lat===lat&&LOC.lon===lon){LOC.name=pl.join(', ');try{localStorage.setItem('lunar-loc',JSON.stringify(LOC))}catch(e){}renderLoc()}}catch(e){}
 }
-function saveLoc(lat,lon){LOC={lat,lon};try{localStorage.setItem('lunar-loc',JSON.stringify(LOC))}catch(e){}renderLoc();hero();if(TAB==='cal')detail();nameLoc(lat,lon)}
+function saveLoc(lat,lon,live){LOC=live?{lat,lon,live:true}:{lat,lon};try{localStorage.setItem('lunar-loc',JSON.stringify(LOC))}catch(e){}renderLoc();hero();if(TAB==='cal')detail();nameLoc(lat,lon)}
 async function shareDay(){
   const [y,m,d]=SEL.split('-').map(Number),jd=noonJD(y,m-1,d),dj=dayJD(y,m-1,d),i=info(dj),sm=$('smsg'),say=t=>{if(sm)sm.textContent=t};
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});
@@ -647,7 +649,7 @@ document.addEventListener('click',e=>{
     else if(k==='set'){const wd=(v,d)=>/[a-z-]/i.test(v)?v:v.trim()+' '+d,la=pc(wd($('la').value,$('lad').value)),lo=pc(wd($('lo').value,$('lod').value));if(la===null||lo===null||Math.abs(la)>90||Math.abs(lo)>180)msg('Enter numbers like 40.3 and 80.0, then pick N or S and E or W.');else if(tzOff(lo)>4&&tzOff(-lo)<=4){PEND={la,lo};const l=$('lmsg');l.innerHTML=`That longitude is ${Math.abs(lo)}° ${lo>0?'east':'west'}, but your device clock matches a ${lo>0?'western':'eastern'} location. Which did you mean? <button class="tog" data-loc="fixflip">Use ${Math.abs(lo)}° ${lo>0?'west':'east'}</button> <button class="tog" data-loc="fixkeep">Keep ${lo>0?'east':'west'}</button>`}else saveLoc(la,lo)}
     else if(k==='fixflip'&&PEND)saveLoc(PEND.la,-PEND.lo);
     else if(k==='fixkeep'&&PEND)saveLoc(PEND.la,PEND.lo);
-    else if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>saveLoc(p.coords.latitude,p.coords.longitude),()=>msg('Location is unavailable here. Enter coordinates instead.'),{timeout:10000});
+    else if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>saveLoc(p.coords.latitude,p.coords.longitude,true),()=>msg('Location is unavailable here. Enter coordinates instead.'),{timeout:10000});
     else msg('Location is unavailable here. Enter coordinates instead.');
     return;
   }
