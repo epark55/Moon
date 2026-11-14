@@ -520,7 +520,7 @@ const distTxt=jd=>{const km=moonPos(jd).km,p=Math.round(Math.abs(1-km/384400)*10
 let LOC=null;try{LOC=JSON.parse(localStorage.getItem('lunar-loc'))}catch(e){}
 let HZ=0;try{HZ=parseFloat(localStorage.getItem('lunar-hz'))||0}catch(e){}
 /*LIVELOC*/const liveLoc=async()=>{try{if(!LOC||!LOC.live||!navigator.geolocation)return;let ok=!!window.__native;if(!ok&&navigator.permissions){ok=(await navigator.permissions.query({name:'geolocation'})).state==='granted'}if(!ok)return;
-navigator.geolocation.getCurrentPosition(p=>{const la=p.coords.latitude,lo=p.coords.longitude,dx=(la-LOC.lat)*111,dy=(lo-LOC.lon)*111*Math.cos(la*Math.PI/180);if(Math.hypot(dx,dy)>2)saveLoc(la,lo,true)},()=>{},{timeout:8000,maximumAge:300000})}catch(e){}};
+navigator.geolocation.getCurrentPosition(p=>{const la=p.coords.latitude,lo=p.coords.longitude,dx=(la-LOC.lat)*111,dy=(lo-LOC.lon)*111*Math.cos(la*Math.PI/180);if(Math.hypot(dx,dy)>2)saveLoc(la,lo,true)},()=>{},{timeout:8000,maximumAge:0})}catch(e){}};
 liveLoc();document.addEventListener('visibilitychange',()=>{if(!document.hidden)liveLoc()});window.addEventListener('pageshow',e=>{if(e.persisted)liveLoc()});/*/LIVELOC*/
 let PEND=null;
 const pc=s=>{const m=/^\s*(-?\d+(?:\.\d+)?)\s*°?\s*([NSEWnsew])?\s*$/.exec(s);if(!m)return null;let v=parseFloat(m[1]);if(m[2]&&/[swSW]/.test(m[2]))v=-Math.abs(v);return v};
