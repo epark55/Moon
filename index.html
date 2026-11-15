@@ -633,7 +633,7 @@ async function shareDay(){
     DRY=false;content(tier,MY+D+40);
     x.textAlign='center';x.fillStyle=MU;x.font='32px Georgia, serif';x.fillText('Lunar Moon Calendar  ·  @ed_p_photos',540,1884);
     const blob=await new Promise(r=>c.toBlob(r,'image/png'));file=new File([blob],'moon-'+SEL+'.png',{type:'image/png'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text});say('Shared.');return}
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});say('Shared.');return}
   }catch(err){if(err&&err.name==='AbortError'){say('');return}}
   let saved=false;
   if(file){try{const u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);saved=true}catch(err){}}
