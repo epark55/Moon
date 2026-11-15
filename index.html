@@ -166,6 +166,49 @@ body{font-size:17px}
 <div id="view"></div>
 <p class="note">Times are shown in your local time zone. Phase times for October to December 2026 match published almanacs; other months are calculated and are typically accurate to within an hour or so. Illumination and age are calculated for local noon on each day, and for right now on today's date. Moonrise and moonset are calculated for the coordinates you enter, shown in your device’s time zone; your location stays in this browser. The horizon setting raises the horizon to match trees, hills or buildings in the direction the Moon rises, so moonrise comes a little later and moonset a little earlier. A supermoon here means a full moon closer than about 227,000 miles.</p>
 <section class="note wgt" aria-labelledby="t-hs"><h2 id="t-hs" class="wh">Save to your home screen</h2><p style="margin:4px 0"><strong>iPhone:</strong> open this page in Safari, tap the Share button (square with an arrow), then <em>Add to Home Screen</em>.</p><p style="margin:4px 0"><strong>Android:</strong> open this page in Chrome, tap the &#8942; menu, then <em>Add to Home screen</em>. The lock screen widget below is iPhone only.</p></section>
+<!--ICS-SEC-->
+<section class="note wgt" aria-labelledby="t-ics"><h2 id="t-ics" class="wh">Moonrise and moonset in your calendar</h2>
+<p style="margin:4px 0">Download your moonrise and moonset times for your location as a calendar file, with an optional alert. Choose how long it should cover, then open the file to add the events to Calendar. It works on iPhone, Android and computers.</p>
+<div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:10px 0">
+<label>Cover <select id="icsdays" aria-label="How long"><option value="30">30 days</option><option value="90">3 months</option><option value="365">1 year</option></select></label>
+<label>Alert <select id="icsalert" aria-label="Alert"><option value="-1">none</option><option value="0">at the time</option><option value="15">15 minutes before</option><option value="30">30 minutes before</option><option value="60">1 hour before</option></select></label>
+<label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="icsrise" checked style="width:20px;height:20px"> Moonrise</label>
+<label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="icsset" checked style="width:20px;height:20px"> Moonset</label></div>
+<button type="button" id="icsgo" class="wbtn">Download calendar file</button>
+<p id="icsmsg" style="margin:8px 0" aria-live="polite"></p>
+<p style="margin:4px 0;font-size:.9em">Tip: when your calendar asks where to put the events, choose a new calendar so you can delete them all at once later. The file is a snapshot for the place and dates you pick, so download a new one if you move or it runs out. Nothing is uploaded; the file is made on your device.</p></section>
+<script>(function(){
+var $i=function(i){return document.getElementById(i)};
+function esc(s){return String(s).replace(/[\;,]/g,function(c){return'\\'+c}).replace(/\n/g,'\\n')}
+function fold(l){var o=[];while(l.length>73){o.push(l.slice(0,73));l=' '+l.slice(73)}o.push(l);return o.join('\r\n')}
+function utc(d){var p=function(n){return String(n).padStart(2,'0')};return d.getUTCFullYear()+p(d.getUTCMonth()+1)+p(d.getUTCDate())+'T'+p(d.getUTCHours())+p(d.getUTCMinutes())+p(d.getUTCSeconds())+'Z'}
+$i('icsgo').addEventListener('click',function(){
+ var msg=$i('icsmsg');
+ if(typeof LOC==='undefined'||!LOC){msg.textContent='Set your location above first, then try again.';return}
+ var days=+$i('icsdays').value,al=+$i('icsalert').value,wantR=$i('icsrise').checked,wantS=$i('icsset').checked;
+ if(!wantR&&!wantS){msg.textContent='Choose moonrise, moonset or both.';return}
+ msg.textContent='Working...';
+ setTimeout(function(){try{
+  var now=new Date(),stamp=utc(now),nowJD=toJD(now),L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Lunar Moon Calendar//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Moonrise and moonset'],n=0,place=LOC.name?LOC.name:(Math.abs(LOC.lat).toFixed(2)+(LOC.lat>=0?'N':'S')+' '+Math.abs(LOC.lon).toFixed(2)+(LOC.lon>=0?'E':'W'));
+  for(var i=0;i<=days;i++){
+   var d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i),r=riseSet(d.getFullYear(),d.getMonth(),d.getDate(),LOC.lat,LOC.lon);
+   [['Moonrise',r.rise,wantR,'r'],['Moonset',r.set,wantS,'s']].forEach(function(e){
+    if(!e[2]||e[1]===null||e[1]<=nowJD)return;
+    var t=toDate(e[1]),t=new Date(Math.round(t.getTime()/60000)*60000),end=new Date(t.getTime()+600000),ph=info(e[1]);
+    L.push('BEGIN:VEVENT','UID:'+e[3]+t.getTime()/60000+'@lunar-moon-calendar','DTSTAMP:'+stamp,'DTSTART:'+utc(t),'DTEND:'+utc(end),
+     fold('SUMMARY:'+esc(e[0]+' - '+Math.round(ph.ill*100)+'% lit')),fold('DESCRIPTION:'+esc(ph.name+', '+Math.round(ph.ill*100)+'% lit. Times for '+place+'.')),'TRANSP:TRANSPARENT');
+    if(al>=0)L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+esc(e[0]),'TRIGGER:'+(al===0?'PT0S':'-PT'+al+'M'),'END:VALARM');
+    L.push('END:VEVENT');n++});
+  }
+  L.push('END:VCALENDAR');
+  if(!n){msg.textContent='No moonrise or moonset times were found for those dates.';return}
+  var blob=new Blob([L.join('\r\n')+'\r\n'],{type:'text/calendar;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='moonrise-moonset.ics';document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000);
+  msg.textContent='Made '+n+' events for '+place+'. Open the downloaded file to add them to your calendar.';
+ }catch(err){msg.textContent='Sorry, the file could not be made.'}},30)});
+})();</script>
+<!--/ICS-SEC-->
 <!--WGT-SEC-->
 <section class="note wgt" aria-label="iPhone widget"><button type="button" id="wtog" class="wbar" aria-expanded="false" aria-controls="wbody"><span>iPhone widget (Scriptable)</span><span class="wchev" aria-hidden="true"></span></button>
 <div id="wbody" hidden>
