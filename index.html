@@ -185,11 +185,11 @@ var now=new Date(),ms=$p('prmon'),ys=$p('pryr');
 MN.forEach(function(n,i){var o=document.createElement('option');o.value=i;o.textContent=n;if(i===now.getMonth())o.selected=true;ms.appendChild(o)});
 for(var y=now.getFullYear()-1;y<=now.getFullYear()+3;y++){var o=document.createElement('option');o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;ys.appendChild(o)}
 function icon(p,s){var r=s/2-1,c=s/2,rx=Math.abs(Math.cos(2*Math.PI*p))*r,d=p<.5?'M'+c+' '+(c-r)+'A'+r+' '+r+' 0 0 1 '+c+' '+(c+r)+'A'+rx+' '+r+' 0 0 '+(p<.25?0:1)+' '+c+' '+(c-r)+'Z':'M'+c+' '+(c-r)+'A'+r+' '+r+' 0 0 0 '+c+' '+(c+r)+'A'+rx+' '+r+' 0 0 '+(p>.75?1:0)+' '+c+' '+(c-r)+'Z';
- return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'"><circle cx="'+c+'" cy="'+c+'" r="'+r+'" fill="#26304f"/><path d="'+d+'" fill="#f4ecd6"/><circle cx="'+c+'" cy="'+c+'" r="'+r+'" fill="none" stroke="#26304f" stroke-width=".8"/></svg>'}
+ return '<svg'+(document.body.classList.contains('south')?' style="transform:scaleX(-1)"':'')+' width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'"><circle cx="'+c+'" cy="'+c+'" r="'+r+'" fill="#26304f"/><path d="'+d+'" fill="#f4ecd6"/><circle cx="'+c+'" cy="'+c+'" r="'+r+'" fill="none" stroke="#26304f" stroke-width=".8"/></svg>'}
 function tm(jd){return toDate(jd+30/86400).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
-$p('prgo').addEventListener('click',function(){
- var m=+ms.value,y=+ys.value,wantRS=$p('prrs').checked,wantIll=$p('prill').checked,msg=$p('prmsg'),haveLoc=typeof LOC!=='undefined'&&LOC,useRS=wantRS&&haveLoc;
+function doPrint(m,y){
+ var wantRS=$p('prrs').checked,wantIll=$p('prill').checked,msg=$p('prmsg'),haveLoc=typeof LOC!=='undefined'&&LOC,useRS=wantRS&&haveLoc;
  var nd=new Date(y,m+1,0).getDate(),first=new Date(y,m,1).getDay(),rows=Math.ceil((first+nd)/7);
  var evs={},list=[];events(toJD(new Date(y,m,1)),toJD(new Date(y,m+1,1))).forEach(function(e){var t=toDate(e.jd+30/86400),d=t.getDate();(evs[d]=evs[d]||[]).push(e);list.push(e)});
  var place=haveLoc?(LOC.name?LOC.name:(Math.abs(LOC.lat).toFixed(2)+(LOC.lat>=0?'N':'S')+' '+Math.abs(LOC.lon).toFixed(2)+(LOC.lon>=0?'E':'W'))):'';
@@ -216,7 +216,8 @@ $p('prgo').addEventListener('click',function(){
  var done=function(){var s=$p('prstyle');if(s)s.remove();sh.innerHTML='';window.removeEventListener('afterprint',done)};
  window.addEventListener('afterprint',done);
  msg.textContent='';
- setTimeout(function(){try{window.print()}catch(e){msg.textContent='Printing is not available here.';done()}},60)});
+ setTimeout(function(){try{window.print()}catch(e){msg.textContent='Printing is not available here.';done()}},60)}
+$p('prgo').addEventListener('click',function(){doPrint(+ms.value,+ys.value)});window.__printMonth=doPrint;
 })();</script>
 <!--/PRT-SEC-->
 <!--ICS-SEC-->
@@ -546,7 +547,7 @@ function detail(){
   const i=info(dayJD(y,m-1,d)),es=events(noonJD(y,m-1,d)-.5,noonJD(y,m-1,d)+.5).filter(e=>key(toDate(e.jd))===SEL);
   const sp=SPECIAL.filter(s=>inReg(s)&&s.keys.includes(SEL));
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-  $('detail').innerHTML=`<div class="detail">${eclMoon(y,m-1,d,moon(i.p,100,noonJD(y,m-1,d)))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${eclHtml(y,m-1,d)}${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button><span id="smsg" role="status"></span></div></div></div>`;
+  $('detail').innerHTML=`<div class="detail">${eclMoon(y,m-1,d,moon(i.p,100,noonJD(y,m-1,d)))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${eclHtml(y,m-1,d)}${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button></div><div class="share"><button class="tog" data-sharemonth>Share this month</button>${typeof window.__printMonth==='function'?'<button class="tog" data-printmonth>Print this month</button>':''}<span id="smsg" role="status"></span></div></div></div>`;
 }
 let EVF='all',EVP=false;const CATS=[['all','All'],['ecl','Eclipses'],['occ','Occultations'],['met','Meteors'],['pla','Planets'],['pho','Photo'],['cyc','Distance and tides'],['moon','Moon and seasons']];
 const cat=s=>/eclipse/i.test(s.t)?'ecl':/occult/i.test(s.t)?'occ':/meteor|Taurid|Leonid|Geminid|Quadrantid|Perseid/i.test(s.t)?'met':/opposition|elongation|conjunction|close to/i.test(s.t)?'pla':/earthshine/i.test(s.t)?'pho':/perigee|apogee|king tide|micromoon/i.test(s.t)?'cyc':'moon';
@@ -762,6 +763,44 @@ async function shareDay(){
   if(!ok){const a=document.createElement('textarea');a.value=text;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{ok=document.execCommand('copy')}catch(err){}a.remove()}
   say(saved?(ok?'Image saved to your downloads and caption copied.':'Image saved to your downloads.'):ok?'Caption copied. Paste it into your post.':text);
 }
+async function shareMonth(){
+  const sm=$('smsg'),say=t=>{if(sm)sm.textContent=t},W=1080,H=1350,SANS='-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif',SERIF='Georgia, serif',CR='#f1ead0',TX='#f7f9ff',MU='#b9c2e0';
+  const south=document.body.classList.contains('south'),first=new Date(Y,M,1),nd=new Date(Y,M+1,0).getDate(),lead=first.getDay(),rows=Math.ceil((lead+nd)/7);
+  const evs=events(noonJD(Y,M,1)-1,noonJD(Y,M,nd)+1).filter(e=>{const t=toDate(e.jd);return t.getMonth()===M&&t.getFullYear()===Y}),map={};
+  evs.forEach(e=>{const d=toDate(e.jd+30/86400).getDate();(map[d]=map[d]||[]).push(e)});
+  const QN=['New Moon','First Quarter','Full Moon','Last Quarter'],QS=['New','1st Qtr','Full','Last Qtr'],tm=j=>fmt(j,{hour:'numeric',minute:'2-digit'}),mname=first.toLocaleDateString([],{month:'long'});
+  let file=null;
+  try{
+    const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0d1326');g.addColorStop(1,'#1d2748');x.fillStyle=g;x.fillRect(0,0,W,H);
+    const PAD=40,GW=W-2*PAD,CW=GW/7,GT=210,legendH=Math.ceil(evs.length/2)*44+36,GB=H-70-legendH,CH=(GB-GT)/rows;
+    x.textAlign='left';x.fillStyle=CR;x.font='700 92px '+SERIF;x.fillText(mname,PAD,110);
+    const mw=x.measureText(mname+' ').width;x.fillStyle=MU;x.font='400 50px '+SERIF;x.fillText(String(Y),PAD+mw+6,110);
+    x.fillStyle=MU;x.font='600 26px '+SANS;x.textAlign='center';try{x.letterSpacing='2px'}catch(e){}
+    ['SUN','MON','TUE','WED','THU','FRI','SAT'].forEach((w,k)=>x.fillText(w,PAD+CW*k+CW/2,GT-14));try{x.letterSpacing='0px'}catch(e){}
+    const iconPath=(p,s)=>{const r=s/2,c0=s/2,rx=Math.abs(Math.cos(2*Math.PI*p))*r;return p<.5?`M${c0} ${c0-r}A${r} ${r} 0 0 1 ${c0} ${c0+r}A${rx} ${r} 0 0 ${p<.25?0:1} ${c0} ${c0-r}Z`:`M${c0} ${c0-r}A${r} ${r} 0 0 0 ${c0} ${c0+r}A${rx} ${r} 0 0 ${p>.75?1:0} ${c0} ${c0-r}Z`};
+    for(let d=1;d<=nd;d++){
+      const pos=lead+d-1,col=pos%7,row=Math.floor(pos/7),cx0=PAD+col*CW,cy0=GT+row*CH,i=info(dayJD(Y,M,d)),main=map[d];
+      x.fillStyle=main?'rgba(241,234,208,.16)':'rgba(255,255,255,.05)';x.fillRect(cx0+3,cy0+3,CW-6,CH-6);
+      x.textAlign='left';x.fillStyle=main?CR:TX;x.font='700 26px '+SANS;x.fillText(String(d),cx0+12,cy0+34);
+      const S=Math.min(CW-44,CH-(main?88:58)),ix=cx0+(CW-S)/2,iy=cy0+(main?44:40);
+      x.save();x.translate(ix,iy);if(south){x.translate(S,0);x.scale(-1,1)}
+      x.fillStyle='#2a3453';x.beginPath();x.arc(S/2,S/2,S/2,0,7);x.fill();x.fillStyle='#f4ecd6';x.fill(new Path2D(iconPath(i.p,S)));
+      x.strokeStyle='#5d6c9e';x.lineWidth=1.5;x.beginPath();x.arc(S/2,S/2,S/2,0,7);x.stroke();x.restore();
+      if(main){x.textAlign='center';x.fillStyle=CR;x.font='700 21px '+SANS;x.fillText(QS[main[0].q]+(main[0].sup?' *':''),cx0+CW/2,cy0+CH-30);x.fillStyle=MU;x.font='400 19px '+SANS;x.fillText(tm(main[0].jd),cx0+CW/2,cy0+CH-9)}
+      else{x.textAlign='center';x.fillStyle=MU;x.font='400 19px '+SANS;x.fillText(Math.round(i.ill*100)+'%',cx0+CW/2,cy0+CH-10)}
+    }
+    /* list of the month's main phases */
+    x.textAlign='left';let ly=GB+46;evs.forEach((e,k)=>{const t=toDate(e.jd+30/86400),lx=PAD+(k%2)*(GW/2),yy=ly+Math.floor(k/2)*44;
+      x.fillStyle=CR;x.font='700 27px '+SANS;const nm=QN[e.q]+(e.sup?' *':''),bw=x.measureText(nm).width;x.fillText(nm,lx,yy);x.fillStyle=TX;x.font='400 27px '+SANS;x.fillText(t.toLocaleDateString([],{month:'short',day:'numeric'})+', '+tm(e.jd),lx+bw+14,yy)});
+    if(evs.some(e=>e.sup)){x.textAlign='left';x.fillStyle=MU;x.font='24px '+SANS;x.fillText('* Supermoon',PAD,H-24)}
+    x.textAlign='center';x.fillStyle=MU;x.font='28px '+SERIF;x.fillText('Lunar Moon Calendar  ·  @ed_p_photos',W/2,H-24);
+    const blob=await new Promise(r=>c.toBlob(r,'image/png'));file=new File([blob],'moon-'+Y+'-'+String(M+1).padStart(2,'0')+'.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});say('Shared.');return}
+  }catch(err){if(err&&err.name==='AbortError'){say('');return}}
+  if(file){try{const u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);say('Image saved to your downloads.');return}catch(err){}}
+  say('Sharing is not available here.');
+}
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-loc]');
   if(b){
@@ -775,6 +814,8 @@ document.addEventListener('click',e=>{
     return;
   }
   if(e.target.closest('[data-share]'))shareDay();
+  if(e.target.closest('[data-sharemonth]'))shareMonth();
+  if(e.target.closest('[data-printmonth]')&&window.__printMonth)window.__printMonth(M,Y);
 });
 document.addEventListener('change',e=>{if(e.target.id==='hz'){HZ=Math.min(15,Math.max(0,parseFloat(e.target.value)||0));try{localStorage.setItem('lunar-hz',String(HZ))}catch(x){}hero();if(TAB==='cal')detail()}});
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],p2=n=>String(n).padStart(2,'0');
