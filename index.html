@@ -210,13 +210,23 @@ function doPrint(m,y){
  h+='</div>';
  h+='<div style="margin-top:6px;font-size:11px;color:#444">'+list.map(function(e){var t=toDate(e.jd+30/86400);return'<strong>'+QN[e.q]+'</strong> '+MN[t.getMonth()].slice(0,3)+' '+t.getDate()+', '+tm(e.jd)}).join(' &nbsp;·&nbsp; ')+'</div>';
  h+='<div style="margin-top:3px;font-size:10px;color:#6a728a">Times are in the time zone of the device that printed this page. Illumination is for local noon each day.'+(wantRS&&!haveLoc?' Moonrise and moonset are not shown because no location was set.':'')+'</div></div>';
- var sh=$p('prsheet');if(sh.parentNode!==document.body)document.body.appendChild(sh);sh.innerHTML=h;
- var st=document.createElement('style');st.id='prstyle';st.textContent='@page{size:landscape;margin:.4in}@media print{html{color-scheme:light!important}html,body{background:#fff!important;background-image:none!important;margin:0!important;padding:0!important;min-height:0!important;height:auto!important}body::before,body::after{display:none!important}body>*:not(#prsheet){display:none!important}#prsheet{display:block!important;background:#fff}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
- document.head.appendChild(st);
- var done=function(){var s=$p('prstyle');if(s)s.remove();sh.innerHTML='';window.removeEventListener('afterprint',done)};
- window.addEventListener('afterprint',done);
  msg.textContent='';
- setTimeout(function(){try{window.print()}catch(e){msg.textContent='Printing is not available here.';done()}},60)}
+ var css0='@page{size:landscape;margin:.4in}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}',w=null;
+ try{w=window.open('','_blank')}catch(e){w=null}
+ if(w&&w.document){
+  w.document.open();
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Moon calendar '+MN[m]+' '+y+'</title><style>'+css0+'body{margin:0;background:#fff}.bar{padding:12px 16px;background:#eef0f8;font:16px -apple-system,Helvetica,Arial,sans-serif;color:#0d1326}.bar button{font:600 16px -apple-system,Helvetica,Arial,sans-serif;padding:10px 18px;border:0;border-radius:10px;background:#f0c36a;color:#2a1c00;margin-right:12px}.sheet{min-width:10in;padding:.2in .3in}@media print{.bar{display:none}.sheet{padding:0;min-width:0}}</style></head><body><div class="bar"><button onclick="window.print()">Print or save as PDF</button>Landscape, one page. Choose Save as PDF in the print window to keep a copy.</div><div class="sheet">'+h+'</div></body></html>');
+  w.document.close();
+  msg.textContent='The calendar opened in a new tab. Use its Print button if the print window does not open by itself.';var sm2=document.getElementById('smsg');if(sm2)sm2.textContent=msg.textContent;
+  try{w.focus();w.setTimeout(function(){try{w.print()}catch(e){}},400)}catch(e){}
+  return}
+ /* pop-ups blocked: print this page itself, right away, inside the tap */
+ var sh=$p('prsheet');if(sh.parentNode!==document.body)document.body.appendChild(sh);sh.innerHTML=h;
+ var st=document.createElement('style');st.id='prstyle';st.textContent=css0+'@media print{html{color-scheme:light!important}html,body{background:#fff!important;background-image:none!important;margin:0!important;padding:0!important;min-height:0!important;height:auto!important}body::before,body::after{display:none!important}body>*:not(#prsheet){display:none!important}#prsheet{display:block!important;background:#fff}}';
+ document.head.appendChild(st);
+ var done=function(){var s0=$p('prstyle');if(s0)s0.remove();sh.innerHTML='';window.removeEventListener('afterprint',done)};
+ window.addEventListener('afterprint',done);
+ try{window.print()}catch(e){msg.textContent='Printing is not available here.';done()}}
 $p('prgo').addEventListener('click',function(){doPrint(+ms.value,+ys.value)});window.__printMonth=doPrint;
 })();</script>
 <!--/PRT-SEC-->
