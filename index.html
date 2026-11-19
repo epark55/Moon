@@ -788,7 +788,7 @@ async function shareDay(){
   say(saved?(ok?'Image saved to your downloads and caption copied.':'Image saved to your downloads.'):ok?'Caption copied. Paste it into your post.':text);
 }
 async function shareMonth(){
-  const sm=$('smsg'),say=t=>{if(sm)sm.textContent=t},W=1080,H=1350,SANS='-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif',SERIF='Georgia, serif',CR='#f1ead0',TX='#f7f9ff',MU='#b9c2e0';
+  const sm=$('smsg'),say=t=>{if(sm)sm.textContent=t},W=1080,H=1350,SANS='-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif',SERIF='Georgia, serif',FG='#f8f9ff',MU='#c0c8e2',LINE='#34406a',DARK='#26304f',ACC='#8fb4ea',GOLD='#f0c36a';
   const south=document.body.classList.contains('south'),first=new Date(Y,M,1),nd=new Date(Y,M+1,0).getDate(),lead=first.getDay(),rows=Math.ceil((lead+nd)/7);
   const evs=events(noonJD(Y,M,1)-1,noonJD(Y,M,nd)+1).filter(e=>{const t=toDate(e.jd);return t.getMonth()===M&&t.getFullYear()===Y}),map={};
   evs.forEach(e=>{const d=toDate(e.jd+30/86400).getDate();(map[d]=map[d]||[]).push(e)});
@@ -796,29 +796,31 @@ async function shareMonth(){
   let file=null;
   try{
     const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
-    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0d1326');g.addColorStop(1,'#1d2748');x.fillStyle=g;x.fillRect(0,0,W,H);
-    const PAD=40,GW=W-2*PAD,CW=GW/7,GT=210,legendH=Math.ceil(evs.length/2)*44+36,GB=H-70-legendH,CH=(GB-GT)/rows;
-    x.textAlign='left';x.fillStyle=CR;x.font='700 92px '+SERIF;x.fillText(mname,PAD,110);
-    const mw=x.measureText(mname+' ').width;x.fillStyle=MU;x.font='400 50px '+SERIF;x.fillText(String(Y),PAD+mw+6,110);
-    x.fillStyle=MU;x.font='600 26px '+SANS;x.textAlign='center';try{x.letterSpacing='2px'}catch(e){}
-    ['SUN','MON','TUE','WED','THU','FRI','SAT'].forEach((w,k)=>x.fillText(w,PAD+CW*k+CW/2,GT-14));try{x.letterSpacing='0px'}catch(e){}
+    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a0f20');g.addColorStop(1,'#141c38');x.fillStyle=g;x.fillRect(0,0,W,H);
+    const MI=new Image();MI.src=document.querySelector('#mimg image').getAttribute('href');try{await MI.decode()}catch(e){}
+    const PAD=36,GAP=8,GW=W-2*PAD,CW=(GW-6*GAP)/7,GT=206,legendH=Math.ceil(evs.length/2)*44+40,GB=H-70-legendH,CH=(GB-GT-(rows-1)*GAP)/rows;
+    x.textAlign='left';x.fillStyle=FG;x.font='700 84px '+SERIF;x.fillText(mname+' '+Y,PAD,112);
+    x.fillStyle=MU;x.font='400 30px '+SANS;x.textAlign='center';
+    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach((w,k)=>x.fillText(w,PAD+k*(CW+GAP)+CW/2,GT-18));
+    const rr=(px,py,w,h,r)=>{x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath()};
     const iconPath=(p,s)=>{const r=s/2,c0=s/2,rx=Math.abs(Math.cos(2*Math.PI*p))*r;return p<.5?`M${c0} ${c0-r}A${r} ${r} 0 0 1 ${c0} ${c0+r}A${rx} ${r} 0 0 ${p<.25?0:1} ${c0} ${c0-r}Z`:`M${c0} ${c0-r}A${r} ${r} 0 0 0 ${c0} ${c0+r}A${rx} ${r} 0 0 ${p>.75?1:0} ${c0} ${c0-r}Z`};
     for(let d=1;d<=nd;d++){
-      const pos=lead+d-1,col=pos%7,row=Math.floor(pos/7),cx0=PAD+col*CW,cy0=GT+row*CH,i=info(dayJD(Y,M,d)),main=map[d];
-      x.fillStyle=main?'rgba(241,234,208,.16)':'rgba(255,255,255,.05)';x.fillRect(cx0+3,cy0+3,CW-6,CH-6);
-      x.textAlign='left';x.fillStyle=main?CR:TX;x.font='700 26px '+SANS;x.fillText(String(d),cx0+12,cy0+34);
-      const S=Math.min(CW-44,CH-(main?88:58)),ix=cx0+(CW-S)/2,iy=cy0+(main?44:40);
+      const pos=lead+d-1,col=pos%7,row=Math.floor(pos/7),cx0=PAD+col*(CW+GAP),cy0=GT+row*(CH+GAP),i=info(dayJD(Y,M,d)),main=map[d],sup=main&&main.some(e=>e.sup);
+      rr(cx0,cy0,CW,CH,16);x.fillStyle='rgba(255,255,255,.06)';x.fill();x.strokeStyle=LINE;x.lineWidth=1.5;x.stroke();
+      x.textAlign='left';x.fillStyle=MU;x.font='400 25px '+SANS;x.fillText(String(d),cx0+11,cy0+30);
+      const lbl=main?(sup?'Supermoon':QS[main[0].q]):'',S=Math.min(CW-20,CH-96),ix=cx0+(CW-S)/2,iy=cy0+38;
       x.save();x.translate(ix,iy);if(south){x.translate(S,0);x.scale(-1,1)}
-      x.fillStyle='#2a3453';x.beginPath();x.arc(S/2,S/2,S/2,0,7);x.fill();x.fillStyle='#f4ecd6';x.fill(new Path2D(iconPath(i.p,S)));
-      x.strokeStyle='#5d6c9e';x.lineWidth=1.5;x.beginPath();x.arc(S/2,S/2,S/2,0,7);x.stroke();x.restore();
-      if(main){x.textAlign='center';x.fillStyle=CR;x.font='700 21px '+SANS;x.fillText(QS[main[0].q]+(main[0].sup?' *':''),cx0+CW/2,cy0+CH-30);x.fillStyle=MU;x.font='400 19px '+SANS;x.fillText(tm(main[0].jd),cx0+CW/2,cy0+CH-9)}
-      else{x.textAlign='center';x.fillStyle=MU;x.font='400 19px '+SANS;x.fillText(Math.round(i.ill*100)+'%',cx0+CW/2,cy0+CH-10)}
+      x.fillStyle=DARK;x.beginPath();x.arc(S/2,S/2,S/2,0,7);x.fill();
+      x.save();x.beginPath();x.arc(S/2,S/2,S/2,0,7);x.clip();x.globalAlpha=.2;x.drawImage(MI,0,0,S,S);x.restore();
+      x.save();x.clip(new Path2D(iconPath(i.p,S)));x.drawImage(MI,0,0,S,S);x.restore();
+      x.strokeStyle=LINE;x.lineWidth=1.5;x.beginPath();x.arc(S/2,S/2,S/2,0,7);x.stroke();x.restore();
+      x.textAlign='center';x.fillStyle=FG;x.font='400 25px '+SANS;x.fillText(Math.round(i.ill*100)+'%',cx0+CW/2,cy0+CH-(lbl?32:14));
+      if(lbl){x.fillStyle=sup?GOLD:ACC;x.font='400 19px '+SANS;x.fillText(lbl,cx0+CW/2,cy0+CH-10)}
     }
     /* list of the month's main phases */
-    x.textAlign='left';let ly=GB+46;evs.forEach((e,k)=>{const t=toDate(e.jd+30/86400),lx=PAD+(k%2)*(GW/2),yy=ly+Math.floor(k/2)*44;
-      x.fillStyle=CR;x.font='700 27px '+SANS;const nm=QN[e.q]+(e.sup?' *':''),bw=x.measureText(nm).width;x.fillText(nm,lx,yy);x.fillStyle=TX;x.font='400 27px '+SANS;x.fillText(t.toLocaleDateString([],{month:'short',day:'numeric'})+', '+tm(e.jd),lx+bw+14,yy)});
-    if(evs.some(e=>e.sup)){x.textAlign='left';x.fillStyle=MU;x.font='24px '+SANS;x.fillText('* Supermoon',PAD,H-24)}
-    x.textAlign='center';x.fillStyle=MU;x.font='28px '+SERIF;x.fillText('Lunar Moon Calendar  ·  @ed_p_photos',W/2,H-24);
+    x.textAlign='left';const LW=GW/2;let ly=GB+52;evs.forEach((e,k)=>{const t=toDate(e.jd+30/86400),lx=PAD+(k%2)*LW,yy=ly+Math.floor(k/2)*44;
+      x.fillStyle=e.sup?GOLD:ACC;x.font='700 27px '+SANS;const nm=QN[e.q],bw=x.measureText(nm+'  ').width;x.fillText(nm,lx,yy);x.fillStyle=FG;x.font='400 27px '+SANS;x.fillText(t.toLocaleDateString([],{month:'short',day:'numeric'})+', '+tm(e.jd),lx+bw,yy)});
+    x.textAlign='center';x.fillStyle=MU;x.font='28px '+SERIF;x.fillText('Lunar Moon Calendar  ·  @ed_p_photos',W/2,H-26);
     const blob=await new Promise(r=>c.toBlob(r,'image/png'));file=new File([blob],'moon-'+Y+'-'+String(M+1).padStart(2,'0')+'.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});say('Shared.');return}
   }catch(err){if(err&&err.name==='AbortError'){say('');return}}
