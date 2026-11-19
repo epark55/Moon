@@ -644,7 +644,7 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-gs]')){GS=!(GS===null?document.body.classList.contains('south'):GS);pgTab();return}
   if(e.target.closest('#totop')){window.scrollTo({top:0,behavior:'smooth'});return}
   if(e.target.closest('[data-past]')){EVP=!EVP;evTab(false);return}
-  const m=e.target.closest('[data-m]');if(m){const v=+m.dataset.m;if(v===0){if(navigator.onLine!==false){try{location.reload();return}catch(x){}}Y=now.getFullYear();M=now.getMonth();SEL=key(now);loadWx(true)}else{M+=v;if(M<0){M=11;Y--}if(M>11){M=0;Y++}}cal();return}
+  const m=e.target.closest('[data-m]');if(m){const v=+m.dataset.m;if(v===0){if(navigator.onLine!==false){try{location.reload();return}catch(x){}}Y=now.getFullYear();M=now.getMonth();SEL=key(now);loadWx(true)}else{M+=v;if(M<0){M=11;Y--}if(M>11){M=0;Y++}SEL=(Y===now.getFullYear()&&M===now.getMonth())?key(now):Y+'-'+(M+1)+'-1'}cal();return}
   const d=e.target.closest('.day[data-k]');if(d){SEL=d.dataset.k;document.querySelectorAll('.day.sel').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');detail()}
 });
 /* The Moon appears upside down from the Southern Hemisphere, so the pictures follow the saved location automatically. */
