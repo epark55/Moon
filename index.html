@@ -247,8 +247,8 @@ $p('prgo').addEventListener('click',function(){doPrint(+ms.value,+ys.value)});wi
 })();</script>
 <!--/PRT-SEC-->
 <!--ICS-SEC-->
-<section class="note wgt" aria-label="Moon calendar download"><button type="button" id="icstog" class="wbar" aria-expanded="false" aria-controls="icsbody"><span>Moon calendar download</span><span class="wchev" aria-hidden="true"></span></button>
-<div id="icsbody" hidden>
+<section class="note wgt" aria-label="Moon calendar download"><button type="button" id="icstog" class="wbar mrow" data-open="icsbody"><span>Moon calendar download</span><span class="wchev" aria-hidden="true"></span></button>
+<div class="pane" id="icsbody" role="dialog" aria-modal="true" aria-label="Calendar download" hidden><div class="pbar"><button type="button" class="pback" data-close>&lsaquo; Back</button><h2>Calendar download</h2></div><div class="pbody">
 <p style="margin:4px 0">Download moonrise and moonset times for your location, and the main moon phases (new moon, first quarter, full moon, last quarter), as a calendar file with an optional alert. Choose how long it should cover, then open the file to add the events to Calendar. It works on iPhone, Android and computers.</p>
 <div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:10px 0">
 <label>Cover <select id="icsdays" aria-label="How long"><option value="30">30 days</option><option value="90">3 months</option><option value="365">1 year</option></select></label>
@@ -259,7 +259,7 @@ $p('prgo').addEventListener('click',function(){doPrint(+ms.value,+ys.value)});wi
 <button type="button" id="icsgo" class="wbtn">Download calendar file</button>
 <p id="icsmsg" style="margin:8px 0" aria-live="polite"></p>
 <p style="margin:4px 0;font-size:.9em">Tip: when your calendar asks where to put the events, choose a new calendar so you can delete them all at once later. The file is a snapshot for the place and dates you pick, so download a new one if you move or it runs out. Nothing is uploaded; the file is made on your device.</p>
-</div></section>
+</div></div></section>
 <script>(function(){
 var $i=function(i){return document.getElementById(i)};
 function esc(s){return String(s).replace(/[\;,]/g,function(c){return'\\'+c}).replace(/\n/g,'\\n')}
@@ -300,19 +300,19 @@ $i('icsgo').addEventListener('click',function(){
  }catch(err){msg.textContent='Sorry, the file could not be made.'}},30)});
 })();</script>
 <!--/ICS-SEC-->
-<script>(function(){[['mtog','mbody'],['icstog','icsbody']].forEach(function(p){var t=document.getElementById(p[0]),b=document.getElementById(p[1]);if(!t||!b)return;t.addEventListener('click',function(){var o=t.getAttribute('aria-expanded')!=='true';t.setAttribute('aria-expanded',o);b.hidden=!o})});
+<script>(function(){[['mtog','mbody']].forEach(function(p){var t=document.getElementById(p[0]),b=document.getElementById(p[1]);if(!t||!b)return;t.addEventListener('click',function(){var o=t.getAttribute('aria-expanded')!=='true';t.setAttribute('aria-expanded',o);b.hidden=!o})});
 var open_=null;function shut(){if(open_){open_.hidden=true;open_=null;document.body.style.overflow=''}}
 document.addEventListener('click',function(e){var o=e.target.closest('[data-open]');if(o){var p=document.getElementById(o.getAttribute('data-open'));if(p){p.hidden=false;open_=p;p.scrollTop=0;document.body.style.overflow='hidden';var c=p.querySelector('[data-close]');if(c)c.focus()}return}if(e.target.closest('[data-close]'))shut()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')shut()})})()</script>
 <!--WGT-SEC-->
-<section class="note wgt" aria-label="iPhone widget"><button type="button" id="wtog" class="wbar" aria-expanded="false" aria-controls="wbody"><span>iPhone widget (Scriptable)</span><span class="wchev" aria-hidden="true"></span></button>
-<div id="wbody" hidden>
+<section class="note wgt" aria-label="iPhone widget"><button type="button" id="wtog" class="wbar mrow" data-open="wbody"><span>iPhone widget (Scriptable)</span><span class="wchev" aria-hidden="true"></span></button>
+<div class="pane" id="wbody" role="dialog" aria-modal="true" aria-label="iPhone widget" hidden><div class="pbar"><button type="button" class="pback" data-close>&lsaquo; Back</button><h2>iPhone widget</h2></div><div class="pbody">
 <p style="margin:4px 0"><b>iPhone only.</b> Scriptable is not available on Android. Android users can add the web app to the home screen instead (see above).</p>
 <ol class="wsteps"><li>Install the free <b>Scriptable</b> app from the App Store.</li><li>Tap <b>Copy widget code</b> below.</li><li>In Scriptable tap <b>+</b>, paste, and name it <b>Lunar</b>. Tap the play button once and allow location.</li><li>Add a Scriptable widget to your lock screen or home screen and choose the script <b>Lunar</b>.</li></ol>
 <p style="margin:6px 0">When the app is updated, copy and paste the code again to update your widget.</p>
 <div class="wact"><button type="button" id="wcopy" class="wbtn">Copy widget code</button><span id="wmsg" role="status" aria-live="polite"></span></div>
 <pre id="wpre" tabindex="0" aria-label="Widget code"></pre>
-</div></section>
+</div></div></section>
 <!--/WGT-SEC-->
 <!--MORE-END-->
 </div></section>
@@ -1709,7 +1709,7 @@ Script.complete();
 <script>(function(){
 var t=document.getElementById('wtog'),b=document.getElementById('wbody'),pre=document.getElementById('wpre'),cp=document.getElementById('wcopy'),msg=document.getElementById('wmsg'),code='';
 function load(){if(!code){var s=document.getElementById('wsrc');code=s?s.textContent.replace(/^\n/,''):''}return code}
-t.addEventListener('click',function(){var o=t.getAttribute('aria-expanded')!=='true';t.setAttribute('aria-expanded',o);b.hidden=!o;if(o&&!pre.textContent){pre.textContent=load()}});
+t.addEventListener('click',function(){if(!pre.textContent){pre.textContent=load()}});
 function say(m){msg.textContent=m;clearTimeout(say.t);say.t=setTimeout(function(){msg.textContent=''},3000)}
 function legacy(c){var a=document.createElement('textarea');a.value=c;a.setAttribute('readonly','');a.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(a);a.select();a.setSelectionRange(0,c.length);var ok=false;try{ok=document.execCommand('copy')}catch(e){}document.body.removeChild(a);return ok}
 cp.addEventListener('click',function(){var c=load();
