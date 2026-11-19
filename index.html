@@ -166,6 +166,8 @@ body{font-size:17px}
 <div id="view"></div>
 <p class="note">Times are shown in your device’s time zone. Moon phase times are calculated and agree with published almanacs to within about a minute. Illumination and age are for local noon on each day, and for the current moment on today’s date. Moonrise and moonset are calculated for the coordinates you enter, shown in your device’s time zone; your location stays in this browser. The horizon setting raises the horizon to match trees, hills or buildings in the direction the Moon rises, so moonrise comes a little later and moonset a little earlier. A supermoon here means a full moon closer than about 227,000 miles.</p>
 <section class="note wgt" aria-labelledby="t-hs"><h2 id="t-hs" class="wh">Save to your home screen</h2><p style="margin:4px 0"><strong>iPhone:</strong> open this page in Safari, tap the Share button (square with an arrow), then <em>Add to Home Screen</em>.</p><p style="margin:4px 0"><strong>Android:</strong> open this page in Chrome, tap the &#8942; menu, then <em>Add to Home screen</em>. The lock screen widget below is iPhone only.</p></section>
+<section class="note wgt" aria-label="More tools"><button type="button" id="mtog" class="wbar" aria-expanded="false" aria-controls="mbody"><span>More tools</span><span class="wchev" aria-hidden="true"></span></button>
+<div id="mbody" hidden>
 <!--PRT-SEC-->
 <section class="note wgt" aria-label="Print a month"><button type="button" id="prtog" class="wbar" aria-expanded="false" aria-controls="prbody"><span>Print a month</span><span class="wchev" aria-hidden="true"></span></button>
 <div id="prbody" hidden>
@@ -177,7 +179,7 @@ body{font-size:17px}
 <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="prill" checked style="width:20px;height:20px"> Percent lit</label></div>
 <button type="button" id="prgo" class="wbtn">Print or save as PDF</button>
 <p id="prmsg" style="margin:8px 0" aria-live="polite"></p>
-<p style="margin:4px 0;font-size:.9em">Tip: in the print window, choose Save as PDF to keep a copy, or turn on background graphics if the shading or moon icons look faint. Nothing is uploaded; the page is made on your device.</p></section>
+<p style="margin:4px 0;font-size:.9em">Tip: in the print window, choose Save as PDF to keep a copy, or turn on background graphics if the shading or moon icons look faint. Nothing is uploaded; the page is made on your device.</p>
 <div id="prsheet" aria-hidden="true"></div>
 </div></section>
 <script>(function(){
@@ -249,7 +251,7 @@ $p('prgo').addEventListener('click',function(){doPrint(+ms.value,+ys.value)});wi
 <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="icsph" style="width:20px;height:20px"> Moon phases</label></div>
 <button type="button" id="icsgo" class="wbtn">Download calendar file</button>
 <p id="icsmsg" style="margin:8px 0" aria-live="polite"></p>
-<p style="margin:4px 0;font-size:.9em">Tip: when your calendar asks where to put the events, choose a new calendar so you can delete them all at once later. The file is a snapshot for the place and dates you pick, so download a new one if you move or it runs out. Nothing is uploaded; the file is made on your device.</p></section>
+<p style="margin:4px 0;font-size:.9em">Tip: when your calendar asks where to put the events, choose a new calendar so you can delete them all at once later. The file is a snapshot for the place and dates you pick, so download a new one if you move or it runs out. Nothing is uploaded; the file is made on your device.</p>
 </div></section>
 <script>(function(){
 var $i=function(i){return document.getElementById(i)};
@@ -291,7 +293,7 @@ $i('icsgo').addEventListener('click',function(){
  }catch(err){msg.textContent='Sorry, the file could not be made.'}},30)});
 })();</script>
 <!--/ICS-SEC-->
-<script>(function(){[['prtog','prbody'],['icstog','icsbody']].forEach(function(p){var t=document.getElementById(p[0]),b=document.getElementById(p[1]);if(!t||!b)return;t.addEventListener('click',function(){var o=t.getAttribute('aria-expanded')!=='true';t.setAttribute('aria-expanded',o);b.hidden=!o})})})()</script>
+<script>(function(){[['mtog','mbody'],['prtog','prbody'],['icstog','icsbody']].forEach(function(p){var t=document.getElementById(p[0]),b=document.getElementById(p[1]);if(!t||!b)return;t.addEventListener('click',function(){var o=t.getAttribute('aria-expanded')!=='true';t.setAttribute('aria-expanded',o);b.hidden=!o})})})()</script>
 <!--WGT-SEC-->
 <section class="note wgt" aria-label="iPhone widget"><button type="button" id="wtog" class="wbar" aria-expanded="false" aria-controls="wbody"><span>iPhone widget (Scriptable)</span><span class="wchev" aria-hidden="true"></span></button>
 <div id="wbody" hidden>
@@ -302,6 +304,8 @@ $i('icsgo').addEventListener('click',function(){
 <pre id="wpre" tabindex="0" aria-label="Widget code"></pre>
 </div></section>
 <!--/WGT-SEC-->
+<!--MORE-END-->
+</div></section>
 <p class="note">Tip: if anything looks out of date or off, tap <b>Today</b> to reload the app with the latest times, weather and features.</p>
 <p class="note">Cloud cover forecasts for the next two weeks come from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>. Your coordinates are sent to them when you set a location, and also once to <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a> to look up the name of the nearest town. Nothing else is sent.</p>
 <p class="note by">Created by <a href="https://www.instagram.com/ed_p_photos/" target="_blank" rel="noopener">@ed_p_photos</a> on Instagram</p>
@@ -567,7 +571,7 @@ function detail(){
   const i=info(dayJD(y,m-1,d)),es=events(noonJD(y,m-1,d)-.5,noonJD(y,m-1,d)+.5).filter(e=>key(toDate(e.jd))===SEL);
   const sp=SPECIAL.filter(s=>inReg(s)&&s.keys.includes(SEL));
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-  $('detail').innerHTML=`<div class="detail">${eclMoon(y,m-1,d,moon(i.p,100,noonJD(y,m-1,d)))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${eclHtml(y,m-1,d)}${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button></div><div class="share"><button class="tog" data-sharemonth>Share this month</button>${typeof window.__printMonth==='function'?'<button class="tog" data-printmonth>Print this month</button>':''}<span id="smsg" role="status"></span></div></div></div>`;
+  $('detail').innerHTML=`<div class="detail">${eclMoon(y,m-1,d,moon(i.p,100,noonJD(y,m-1,d)))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${eclHtml(y,m-1,d)}${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-sharemenu aria-expanded="false">Share</button></div><div class="share" id="shmenu" hidden><button class="tog" data-share>This day (image)</button><button class="tog" data-sharemonth>This month (image)</button></div><div class="share"><span id="smsg" role="status"></span></div></div></div>`;
 }
 let EVF='all',EVP=false;const CATS=[['all','All'],['ecl','Eclipses'],['occ','Occultations'],['met','Meteors'],['pla','Planets'],['pho','Photo'],['cyc','Distance and tides'],['moon','Moon and seasons']];
 const cat=s=>/eclipse/i.test(s.t)?'ecl':/occult/i.test(s.t)?'occ':/meteor|Taurid|Leonid|Geminid|Quadrantid|Perseid/i.test(s.t)?'met':/opposition|elongation|conjunction|close to/i.test(s.t)?'pla':/earthshine/i.test(s.t)?'pho':/perigee|apogee|king tide|micromoon/i.test(s.t)?'cyc':'moon';
@@ -834,6 +838,7 @@ document.addEventListener('click',e=>{
     return;
   }
   if(e.target.closest('[data-share]'))shareDay();
+  if(e.target.closest('[data-sharemenu]')){const mb=e.target.closest('[data-sharemenu]'),mm=$('shmenu');if(mm){const o=mm.hidden;mm.hidden=!o;mb.setAttribute('aria-expanded',o)}}
   if(e.target.closest('[data-sharemonth]'))shareMonth();
   if(e.target.closest('[data-printmonth]')&&window.__printMonth)window.__printMonth(M,Y);
 });
