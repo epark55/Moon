@@ -171,10 +171,7 @@ body{font-size:17px}
 <div class="next" id="next"></div>
 <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-t="cal">Calendar</button><button role="tab" aria-selected="false" data-t="pg">Phase Guide</button><button role="tab" aria-selected="false" data-t="fx">Moon Facts</button><button role="tab" aria-selected="false" data-t="ev">Sky Events</button></div>
 <div id="view"></div>
-<section class="note wgt" aria-label="More tools"><button type="button" id="mtog" class="wbar" aria-expanded="false" aria-controls="mbody"><span>More tools</span><span class="wchev" aria-hidden="true"></span></button>
-<div id="mbody" hidden>
 <!--PRT-SEC-->
-<section class="note wgt" aria-label="Print a month"><button type="button" class="wbar mrow" data-open="prpane"><span>Print a month</span><span class="wchev" aria-hidden="true"></span></button>
 <div class="pane" id="prpane" role="dialog" aria-modal="true" aria-label="Print a month" hidden><div class="pbar"><button type="button" class="pback" data-close>&lsaquo; Back</button><h2>Print a month</h2></div><div class="pbody">
 <p style="margin:4px 0">Print or save a one-page calendar for any month, portrait. It shows the moon phase for every day and the exact time of each main phase. If you have set a location, it also shows moonrise and moonset for each day.</p>
 <div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:10px 0">
@@ -186,7 +183,7 @@ body{font-size:17px}
 <p id="prmsg" style="margin:8px 0" aria-live="polite"></p>
 <p style="margin:4px 0;font-size:.9em">Tip: in the print window, choose Save as PDF to keep a copy, or turn on background graphics if the shading or moon icons look faint. Nothing is uploaded; the page is made on your device.</p>
 <div id="prsheet" aria-hidden="true"></div>
-</div></div></section>
+</div></div>
 <script>(function(){
 var $p=function(i){return document.getElementById(i)};
 var MN=['January','February','March','April','May','June','July','August','September','October','November','December'],WD=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],QN=['New Moon','First Quarter','Full Moon','Last Quarter'];
@@ -313,8 +310,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')shut()})})()
 </div></div></section>
 <!--/WGT-SEC-->
 <!--MORE-END-->
-</div></section>
-<p class="note">Times use your device’s time zone. Moon phase times are calculated using methods from Jean Meeus, <em>Astronomical Algorithms</em>, and agree with US Naval Observatory data to within about a minute. Illumination and age are for local noon on each day, and for right now on today’s date. Moonrise and moonset are calculated for the location you set, assuming a flat, open horizon. Hills, trees and buildings can shift the real time by a few minutes, so use the horizon setting to adjust for them: it raises the horizon, which makes moonrise later and moonset earlier. A supermoon here is a full moon closer than about 227,000 miles. Your location is saved only on this device.</p>
+<p class="note">Times use your device’s time zone. Moon phase times are calculated using methods from Jean Meeus, <em>Astronomical Algorithms</em>, and agree with US Naval Observatory data to within a minute. Illumination and age are for local noon on each day, and for right now on today’s date. Moonrise and moonset are calculated for the location you set, assuming a flat, open horizon. Hills, trees and buildings can shift the real time by a few minutes, so use the horizon setting to adjust for them: it raises the horizon, which makes moonrise later and moonset earlier. A supermoon here is a full moon closer than about 227,000 miles. Your location is saved only on this device.</p>
 <section class="note wgt" aria-labelledby="t-hs"><h2 id="t-hs" class="wh">Save to your home screen</h2><p style="margin:4px 0"><strong>iPhone:</strong> open this page in Safari, tap the Share button (square with an arrow), then <em>Add to Home Screen</em>.</p><p style="margin:4px 0"><strong>Android:</strong> open this page in Chrome, tap the &#8942; menu, then <em>Add to Home screen</em>. The lock screen widget below is iPhone only.</p></section>
 <p class="note">Tip: if anything looks out of date or off, tap <b>Today</b> to reload the app with the latest times, weather and features.</p>
 <p class="note">Cloud cover forecasts for the next two weeks come from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>. Your coordinates are sent to them when you set a location, and also once to <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a> to look up the name of the nearest town. Nothing else is sent.</p>
@@ -581,7 +577,7 @@ function detail(){
   const i=info(dayJD(y,m-1,d)),es=events(noonJD(y,m-1,d)-.5,noonJD(y,m-1,d)+.5).filter(e=>key(toDate(e.jd))===SEL);
   const sp=SPECIAL.filter(s=>inReg(s)&&s.keys.includes(SEL));
   const dt=new Date(y,m-1,d).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-  $('detail').innerHTML=`<div class="detail">${eclMoon(y,m-1,d,moon(i.p,100,noonJD(y,m-1,d)))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${eclHtml(y,m-1,d)}${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button></div><div class="share"><button class="tog" data-sharemonth>Share this month</button><span id="smsg" role="status"></span></div></div></div>`;
+  $('detail').innerHTML=`<div class="detail">${eclMoon(y,m-1,d,moon(i.p,100,noonJD(y,m-1,d)))}<div><h3>${dt}: ${i.name}</h3><p>${Math.round(i.ill*100)}% illuminated, ${i.age.toFixed(1)} days into the lunar cycle. The Moon is ${distTxt(dayJD(y,m-1,d))}.${es.map(e=>` ${lab(e)} at ${fmt(e.jd,{hour:'numeric',minute:'2-digit',timeZoneName:'short'})}.${belowNote(e.jd)}`).join('')}</p>${eclHtml(y,m-1,d)}${pcHtml(y,m-1,d)}${sp.map(s=>`<p><b>${s.t}.</b> ${xt(s)}</p>`).join('')}${rsHtml(y,m-1,d)}<div class="share"><button class="tog" data-share>Share this day</button></div><div class="share"><button class="tog" data-sharemonth>Share this month</button>${typeof window.__printMonth==='function'?'<button class="tog" data-printmonth data-open="prpane">Print this month</button>':''}<span id="smsg" role="status"></span></div></div></div>`;
 }
 let EVF='all',EVP=false;const CATS=[['all','All'],['ecl','Eclipses'],['occ','Occultations'],['met','Meteors'],['pla','Planets'],['pho','Photo'],['cyc','Distance and tides'],['moon','Moon and seasons']];
 const cat=s=>/eclipse/i.test(s.t)?'ecl':/occult/i.test(s.t)?'occ':/meteor|Taurid|Leonid|Geminid|Quadrantid|Perseid/i.test(s.t)?'met':/opposition|elongation|conjunction|close to/i.test(s.t)?'pla':/earthshine/i.test(s.t)?'pho':/perigee|apogee|king tide|micromoon/i.test(s.t)?'cyc':'moon';
@@ -851,7 +847,7 @@ document.addEventListener('click',e=>{
   }
   if(e.target.closest('[data-share]'))shareDay();
   if(e.target.closest('[data-sharemonth]'))shareMonth();
-  if(e.target.closest('[data-printmonth]')&&window.__printMonth)window.__printMonth(M,Y);
+  if(e.target.closest('[data-printmonth]')){const pm=$('prmon'),py=$('pryr');if(pm)pm.value=String(M);if(py&&[...py.options].some(o=>+o.value===Y))py.value=String(Y)}
 });
 document.addEventListener('change',e=>{if(e.target.id==='hz'){HZ=Math.min(15,Math.max(0,parseFloat(e.target.value)||0));try{localStorage.setItem('lunar-hz',String(HZ))}catch(x){}hero();if(TAB==='cal')detail()}});
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],p2=n=>String(n).padStart(2,'0');
