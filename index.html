@@ -192,7 +192,7 @@ var $p=function(i){return document.getElementById(i)};
 var MN=['January','February','March','April','May','June','July','August','September','October','November','December'],WD=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],QN=['New Moon','First Quarter','Full Moon','Last Quarter'];
 var now=new Date(),ms=$p('prmon'),ys=$p('pryr');
 MN.forEach(function(n,i){var o=document.createElement('option');o.value=i;o.textContent=n;if(i===now.getMonth())o.selected=true;ms.appendChild(o)});
-for(var y=now.getFullYear()-1;y<=now.getFullYear()+3;y++){var o=document.createElement('option');o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;ys.appendChild(o)}
+for(var y=now.getFullYear()-1;y<=2050;y++){var o=document.createElement('option');o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;ys.appendChild(o)}
 function icon(p,s){var r=s/2-1,c=s/2,rx=Math.abs(Math.cos(2*Math.PI*p))*r,d=p<.5?'M'+c+' '+(c-r)+'A'+r+' '+r+' 0 0 1 '+c+' '+(c+r)+'A'+rx+' '+r+' 0 0 '+(p<.25?0:1)+' '+c+' '+(c-r)+'Z':'M'+c+' '+(c-r)+'A'+r+' '+r+' 0 0 0 '+c+' '+(c+r)+'A'+rx+' '+r+' 0 0 '+(p>.75?1:0)+' '+c+' '+(c-r)+'Z';
  return '<svg'+(document.body.classList.contains('south')?' style="transform:scaleX(-1)"':'')+' width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'"><circle cx="'+c+'" cy="'+c+'" r="'+r+'" fill="#26304f"/><path d="'+d+'" fill="#f4ecd6"/><circle cx="'+c+'" cy="'+c+'" r="'+r+'" fill="none" stroke="#26304f" stroke-width=".8"/></svg>'}
 function tm(jd){return toDate(jd+30/86400).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
@@ -346,7 +346,7 @@ function ev(n,q){
   const A=[[299.77,0.107408,-0.009173],[251.88,0.016321,0],[251.83,26.651886,0],[349.42,36.412478,0],[84.66,18.206239,0],[141.74,53.303771,0],[207.14,2.453732,0],[154.84,7.306860,0],[34.52,27.261239,0],[207.19,0.121824,0],[291.34,1.844379,0],[161.72,24.198154,0],[239.56,25.513099,0],[331.55,3.592518,0]];
   const K=[0.000325,0.000165,0.000164,0.000126,0.000110,0.000062,0.000060,0.000056,0.000047,0.000042,0.000040,0.000037,0.000035,0.000023];
   A.forEach((a,i)=>{c+=K[i]*S(a[0]+a[1]*k+a[2]*T*T)});
-  jd=jd+c-69.3/86400;
+  {const tt=k/12.3685,dT=tt>26?69.3+.32217*(tt-26)+.005589*(tt*tt-676):69.3;jd=jd+c-dT/86400}
   const o=VJ.find(v=>v.q===q&&Math.abs(v.jd-jd)<2);
   return o?o.jd:jd;
 }
@@ -1453,7 +1453,7 @@ function ev(n,q){
   const A=[[299.77,0.107408,-0.009173],[251.88,0.016321,0],[251.83,26.651886,0],[349.42,36.412478,0],[84.66,18.206239,0],[141.74,53.303771,0],[207.14,2.453732,0],[154.84,7.306860,0],[34.52,27.261239,0],[207.19,0.121824,0],[291.34,1.844379,0],[161.72,24.198154,0],[239.56,25.513099,0],[331.55,3.592518,0]];
   const K=[0.000325,0.000165,0.000164,0.000126,0.000110,0.000062,0.000060,0.000056,0.000047,0.000042,0.000040,0.000037,0.000035,0.000023];
   A.forEach((a,i)=>{c+=K[i]*S(a[0]+a[1]*k+a[2]*T*T)});
-  jd=jd+c-69.3/86400;
+  {const tt=k/12.3685,dT=tt>26?69.3+.32217*(tt-26)+.005589*(tt*tt-676):69.3;jd=jd+c-dT/86400}
   const o=VJ.find(v=>v.q===q&&Math.abs(v.jd-jd)<2);
   return o?o.jd:jd;
 }
